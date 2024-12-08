@@ -1,10 +1,5 @@
-package com.example.hogwartshoppers
+package com.example.hogwartshoppers.screens
 
-import android.os.Bundle
-import android.widget.Button
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,59 +15,26 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
-import kotlinx.coroutines.launch
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            HogwartsHoppersTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
-        }
-    }
-}
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun RegisterScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -92,16 +54,29 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .padding(top = 80.dp),
             verticalArrangement = Arrangement.Center
         ) {
+            // Username Input
+            TextField(
+                value = "",
+                onValueChange = {},
+                label = { Text("Username") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp) // This makes the corners rounded
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Email Input
             TextField(
                 value = "",
                 onValueChange = {},
-                label = { Text("Username or Email Address") },
+                label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp) // This makes the corners rounded
+
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -118,7 +93,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Login Button
+            // Register Button
             Button(
                 onClick = {},
                 modifier = Modifier.fillMaxWidth()
@@ -126,26 +101,28 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFBB9753))
             ) {
-                Text("Login")
+                Text("Register")
             }
+
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Don't have an account?",
+                Text(text = "Already have an account?",
                     color = Color.White
                 )
 
                 TextButton(
-                    onClick = { /* Handle register click */ },
+                    onClick = { /* Handle login click */ },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = Color(0xFFBB9753) // Default theme color
                     )
                 ) {
-                    Text("Register")
+                    Text("Login")
                 }
             }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -168,12 +145,13 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                     modifier = Modifier.weight(1f) // This makes the line continue after the "Or"
                 )
             }
+
             Image(
                 painter = painterResource(id = R.drawable.google),
                 contentDescription = "Google button",
                 modifier = Modifier
                     .size(200.dp) // Adjust size as needed
-                    .offset { IntOffset(0, -120) }
+                    .offset { IntOffset(0, -160) }
             )
         }
         Image(
@@ -182,14 +160,15 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .size(300.dp) // Adjust size as needed
+                .padding(top = 70.dp)
         )
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+@Preview(showBackground = true)
+fun RegisterScreenPreview() {
     HogwartsHoppersTheme {
-        Greeting("Android")
+        RegisterScreen()
     }
 }
