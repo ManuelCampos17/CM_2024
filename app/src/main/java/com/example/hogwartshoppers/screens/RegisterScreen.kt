@@ -22,6 +22,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +39,11 @@ import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
 
 @Composable
 fun RegisterScreen() {
+
+    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -57,11 +66,10 @@ fun RegisterScreen() {
                 .padding(16.dp)
                 .padding(top = 80.dp),
             verticalArrangement = Arrangement.Center
-        ) {
-            // Username Input
+        ) {            // Username Input
             TextField(
-                value = "",
-                onValueChange = {},
+                value = username,
+                onValueChange = { username = it },
                 label = { Text("Username") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp) // This makes the corners rounded
@@ -71,8 +79,8 @@ fun RegisterScreen() {
 
             // Email Input
             TextField(
-                value = "",
-                onValueChange = {},
+                value = email,
+                onValueChange = { email = it },
                 label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp) // This makes the corners rounded
@@ -83,8 +91,8 @@ fun RegisterScreen() {
 
             // Password Input
             TextField(
-                value = "",
-                onValueChange = {},
+                value = password,
+                onValueChange = { password = it },
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
