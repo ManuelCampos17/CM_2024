@@ -19,5 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HogwartsHoppers"
+rootProject.name = "CM_2024"
 include(":app")
+ 
