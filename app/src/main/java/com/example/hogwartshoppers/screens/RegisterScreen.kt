@@ -30,11 +30,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
 
 @Composable
-fun RegisterScreen() {
+fun RegisterScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -162,13 +163,5 @@ fun RegisterScreen() {
                 .size(300.dp) // Adjust size as needed
                 .padding(top = 70.dp)
         )
-    }
-}
-
-@Composable
-@Preview(showBackground = true)
-fun RegisterScreenPreview() {
-    HogwartsHoppersTheme {
-        RegisterScreen()
     }
 }

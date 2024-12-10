@@ -51,6 +51,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.hogwartshoppers.screens.NavGraph
+import com.example.hogwartshoppers.screens.Screens
 import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
 import kotlinx.coroutines.launch
 
@@ -60,19 +64,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             HogwartsHoppersTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                val navController = rememberNavController()
+                NavGraph(navController = navController)
             }
         }
     }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun Login(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -120,7 +120,9 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
             // Login Button
             Button(
-                onClick = {},
+                onClick = {
+                    navController.navigate(Screens.HomeScreen.route)
+                          },
                 modifier = Modifier.fillMaxWidth()
                     .padding(16.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -138,7 +140,9 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                 )
 
                 TextButton(
-                    onClick = { /* Handle register click */ },
+                    onClick = {
+                        navController.navigate(Screens.Register.route)
+                    },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = Color(0xFFBB9753) // Default theme color
                     )
@@ -186,10 +190,10 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HogwartsHoppersTheme {
-        Greeting("Android")
-    }
-}
+// @Preview(showBackground = true)
+// @Composable
+// fun GreetingPreview() {
+//     HogwartsHoppersTheme {
+//         Login()
+//     }
+// }
