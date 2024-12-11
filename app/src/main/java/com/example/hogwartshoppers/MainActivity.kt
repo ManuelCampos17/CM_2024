@@ -38,7 +38,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,9 +74,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 @Composable
 fun Login(navController: NavController) {
+
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -97,8 +103,8 @@ fun Login(navController: NavController) {
         ) {
             // Email Input
             TextField(
-                value = "",
-                onValueChange = {},
+                value = email,
+                onValueChange = { email = it },
                 label = { Text("Username or Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp) // This makes the corners rounded
@@ -108,8 +114,8 @@ fun Login(navController: NavController) {
 
             // Password Input
             TextField(
-                value = "",
-                onValueChange = {},
+                value = password,
+                onValueChange = { password = it },
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
