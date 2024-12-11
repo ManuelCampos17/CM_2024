@@ -34,16 +34,23 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
+import com.example.hogwartshoppers.viewmodels.UserViewModel
 
 @Composable
 fun RegisterScreen(navController: NavController) {
+    val userViewModel: UserViewModel = viewModel()
 
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
 
     Box(
         modifier = Modifier
@@ -104,13 +111,39 @@ fun RegisterScreen(navController: NavController) {
 
             // Register Button
             Button(
-                onClick = {},
+                onClick = {
+                    if(username.isNotBlank() && email.isNotBlank() && password.isNotBlank()){
+                        isLoading = true
+                        userViewModel.registerUser(username, email, password){ success ->
+                            isLoading = false
+                            if(success){
+                                navController.navigate(Screens.Login.route)
+                            }else{
+                                errorMessage = "Registration failed: Email may already be in use"
+                            }
+                        }
+                    }else{
+                        errorMessage = "All fields are required"
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
                     .padding(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFBB9753))
             ) {
-                Text("Register")
+                if (isLoading) {
+                    Text("Registering...")
+                } else {
+                    Text("Register")
+                }
+            }
+
+            if (errorMessage.isNotBlank()) {
+                Text(
+                    text = errorMessage,
+                    color = Color.Red,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
 
             Row(
@@ -174,10 +207,10 @@ fun RegisterScreen(navController: NavController) {
     }
 }
 
-@Composable
-@Preview(showBackground = true)
-fun RegisterScreenPreview() {
-    HogwartsHoppersTheme {
-        RegisterScreen()
-    }
-}
+//@Composable
+//@Preview(showBackground = true)
+//fun RegisterScreenPreview() {
+//    HogwartsHoppersTheme {
+//        RegisterScreen()
+//    }
+//}
