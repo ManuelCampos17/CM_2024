@@ -18,10 +18,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +48,9 @@ import kotlinx.coroutines.NonCancellable.start
 fun SettingsScreen() {
 
     var coupon by remember { mutableStateOf("") }
+    val isNotificationsEnabled = remember { mutableStateOf(false) }
+    val isIconsVisible = remember { mutableStateOf(false) }
+    val isSafetyFeatureEnabled = remember { mutableStateOf(true) }
 
     Box(
         modifier = Modifier
@@ -90,7 +96,7 @@ fun SettingsScreen() {
 
             Column(
                 modifier = Modifier
-                    .size(350.dp, 400.dp)
+                    .size(350.dp, 500.dp)
                     .background(
                         Color(0xffe9dbc0),
                         shape = RoundedCornerShape(16.dp)
@@ -99,11 +105,16 @@ fun SettingsScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally // Centers the buttons horizontally
             ) {
 
+                Spacer(modifier = Modifier.height(28.dp))
+                SettingRow("Turn OFF/ON Notifications", isNotificationsEnabled)
+                SettingRow("Show icons while flying", isIconsVisible)
+                SettingRow("Safety Features", isSafetyFeatureEnabled)
+
                 Text(text = "Enter Coupon:",
                     color = Color(0xff4b2f1b),
                     modifier = Modifier
                         .align(Alignment.Start)
-                        .padding(start = 30.dp, top = 16.dp),
+                        .padding(start = 30.dp),
                     style = TextStyle(
                         fontSize = 22.sp // Specify the size in `sp` (scale-independent pixels)
                     )
@@ -159,6 +170,34 @@ fun SettingsScreen() {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SettingRow(label: String, state: MutableState<Boolean>) {
+    Row(horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+                            .padding(start = 20.dp)) {
+        Text(text = label,
+            modifier = Modifier.weight(1f),
+            color = Color(0xff4b2f1b),
+            fontSize = 18.sp
+        )
+        Switch(
+            checked = state.value,
+            onCheckedChange = { state.value = it },
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White, // Green when checked (on)
+                uncheckedThumbColor = Color.White, // Red when unchecked (off)
+                checkedTrackColor = Color(0xff44ba3c), // Green track when checked
+                uncheckedTrackColor = Color(0xffe22134), // Red track when unchecked
+            ),
+            modifier = Modifier
+                .size(30.dp)
+                .padding(end = 100.dp)
+                .offset(x = -14.dp)
+        )
     }
 }
 
