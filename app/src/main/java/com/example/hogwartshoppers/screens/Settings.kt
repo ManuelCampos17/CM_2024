@@ -138,13 +138,13 @@ fun SettingsScreen() {
                     )
                 }
             }
-        ) {
+        ) { innerPadding ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color(0xff321f12))
                     .border(3.dp, Color(0xFFBB9753))
-                    .padding(16.dp)
+                    .padding(innerPadding)
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.hogwartslogo),

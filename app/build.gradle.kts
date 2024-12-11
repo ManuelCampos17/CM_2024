@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.10"
     id("com.google.gms.google-services")
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0" // Kotlin Compose Plugin
 }
 
 android {
@@ -42,17 +43,21 @@ android {
 
 dependencies {
 
-    implementation("androidx.navigation:navigation-compose:2.4.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation(libs.androidx.navigation.compose.v242)
+    implementation(libs.kotlinx.serialization.json)
+
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
-    implementation("com.google.firebase:firebase-database")
-    implementation("com.google.firebase:firebase-storage")
-    implementation("com.google.firebase:firebase-auth")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.google.firebase.database)
+    implementation(libs.firebase.storage)
+    implementation(libs.firebase.auth)
 
     // Firebase UI
-    implementation("com.firebaseui:firebase-ui-auth:8.0.2")
-    implementation("com.firebaseui:firebase-ui-database:8.0.2")
+    implementation(libs.firebase.ui.auth)
+    implementation(libs.firebase.ui.database)
+
+    implementation (libs.maps.compose)
+    implementation (libs.play.services.maps.v1810)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

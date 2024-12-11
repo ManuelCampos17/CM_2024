@@ -21,8 +21,8 @@ fun NavGraph(navController: NavHostController) {
             RegisterScreen(navController = navController)
         }
 
-        // composable(route = Screens.HomeScreen.route){
-        //    Map(navController = navController)
-        // }
+         composable(route = Screens.HomeScreen.route){
+            MapScreen()
+         }
     }
 }
