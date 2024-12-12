@@ -265,7 +265,7 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
                     .background(Color(0xff321f12))
                     .padding(innerPadding)
                     .border(3.dp, Color(0xFFBB9753)),
-                color = Color(0xFF4B2A1B)
+                color = Color(0xff321f12)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -289,7 +289,7 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
                     // Broom details title
                     Button(
                         onClick = {},
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5E402C)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b)),
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     ) {
                         Text(text = "Broom details", color = Color.White, fontSize = 18.sp)
@@ -304,14 +304,14 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
                     ) {
                         DetailItem(
                             label = "Nimbus 2000",
-                            imageRes = R.drawable.bd_broom,
+                            imageRes = R.drawable.broom_details,
                             imageSize = 100.dp,
                             fontSize = 18.sp,
                             textWidth = 140.dp
                         )
                         DetailItem(
                             label = "Super Fast",
-                            imageRes = R.drawable.bd_speed,
+                            imageRes = R.drawable.speed_details,
                             imageSize = 100.dp,
                             fontSize = 18.sp,
                             textWidth = 140.dp
@@ -326,14 +326,14 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
                     ) {
                         DetailItem(
                             label = "2560 km",
-                            imageRes = R.drawable.bd_dist,
+                            imageRes = R.drawable.km_details,
                             imageSize = 100.dp,
                             fontSize = 18.sp,
                             textWidth = 140.dp
                         )
                         DetailItem(
                             label = "0.20 Gal/Min",
-                            imageRes = R.drawable.bd_pay,
+                            imageRes = R.drawable.money_details,
                             imageSize = 100.dp,
                             fontSize = 18.sp,
                             textWidth = 140.dp
@@ -345,7 +345,7 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
                     // Buttons
                     Button(
                         onClick = {},
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA9855D)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBB9753)),
                         modifier = Modifier.padding(8.dp)
                     ) {
                         Text(text = "Customize Broom", color = Color.White, fontSize = 18.sp)
@@ -355,7 +355,7 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
 
                     Button(
                         onClick = {},
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA9855D)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBB9753)),
                         modifier = Modifier.padding(8.dp)
                     ) {
                         Text(text = "Alohomora", color = Color.White, fontSize = 18.sp)
