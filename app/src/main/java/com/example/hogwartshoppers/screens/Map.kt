@@ -1,6 +1,7 @@
 package com.example.hogwartshoppers.screens
 
 import android.Manifest
+import android.R.attr.shape
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -8,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import android.widget.ImageButton
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -20,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -39,9 +43,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -117,35 +123,107 @@ fun MapScreen(navController: NavController, userMail: String) {
                     .width(300.dp)
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xff321f12))
+
                 ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.hogwartslogo),
+                        contentDescription = "Hogwarts Logo",
+                        modifier = Modifier
+                            .size(200.dp) // Adjust size as needed
+                            .align(Alignment.TopCenter)
+                            .offset(y = (-25).dp)
+                    )
+
                     Column(
                         modifier = Modifier
-                            .align(Alignment.Center)
                             .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+
+                        Divider(
+                            color = Color.White,  // Color of the line
+                            thickness = 1.dp,     // Line thickness
+                            modifier = Modifier
+                                .fillMaxWidth()   // Makes the line span the width
+                                .padding(horizontal = 24.dp)
+                                .padding(top = 150.dp)
+                        )
+
                         Text(
                             text = "Welcome " + currUser?.username,
                             fontSize = 24.sp,
-                            color = Color.Gray
+                            color = Color.White
                         )
-                        Button(onClick = {
-                            navController.navigate(Screens.HomeScreen.route
-                                .replace(
-                                    oldValue = "{email}",
-                                    newValue = currUser?.email.toString()
+                        Button(
+                            onClick = {
+                                navController.navigate(
+                                    Screens.HomeScreen.route
+                                        .replace(
+                                            oldValue = "{email}",
+                                            newValue = currUser?.email.toString()
+                                        )
                                 )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RectangleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xff321f12) // Set the button background color
                             )
-                        }) {
-                            Text("HomePage")
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.profile),
+                                    contentDescription = "Profile Logo",
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .padding(end = 16.dp)
+                                        .align(Alignment.CenterVertically)
+                                )
+
+                                Text(
+                                    text = "HomePage",
+                                    style = TextStyle(fontSize = 18.sp) // Increases the font size
+                                )
+                            }
                         }
+
                         Button(onClick = {
                             navController.navigate(Screens.Login.route)
-                        }) {
-                            Text("Log-Out")
+                        },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RectangleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xff321f12) // Set the button background color
+                            )) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.profile),
+                                    contentDescription = "Profile Logo",
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .padding(end = 16.dp)
+                                        .align(Alignment.CenterVertically)
+                                )
+
+                                Text(
+                                    text = "Log-Out",
+                                    style = TextStyle(fontSize = 18.sp) // Increases the font size
+                                )
+                            }
                         }
+
                         Button(onClick = {
                             navController.navigate(Screens.Settings.route
                                 .replace(
@@ -153,13 +231,62 @@ fun MapScreen(navController: NavController, userMail: String) {
                                     newValue = currUser?.email.toString()
                                 )
                             )
-                        }) {
-                            Text("Settings")
+                        },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RectangleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xff321f12) // Set the button background color
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.settings),
+                                    contentDescription = "Settings Logo",
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .padding(end = 16.dp)
+                                        .align(Alignment.CenterVertically)
+                                )
+
+                                Text(
+                                    text = "Settings",
+                                    style = TextStyle(fontSize = 18.sp) // Increases the font size
+                                )
+                            }
                         }
                         Button(onClick = {
                             // Handle Profile click
-                        }) {
-                            Text("Example")
+
+                        },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RectangleShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xff321f12) // Set the button background color
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.settings),
+                                    contentDescription = "Settings Logo",
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .padding(end = 16.dp)
+                                        .align(Alignment.CenterVertically)
+                                )
+
+                                Text(
+                                    text = "Example",
+                                    style = TextStyle(fontSize = 18.sp) // Increases the font size
+                                )
+                            }
                         }
                     }
                 }
