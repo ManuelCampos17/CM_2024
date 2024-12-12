@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Log
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -47,6 +48,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.google.android.gms.location.LocationServices
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -55,13 +58,24 @@ import com.google.maps.android.compose.MarkerState
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.example.hogwartshoppers.R
-import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
+import com.example.hogwartshoppers.model.User
+import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import kotlinx.coroutines.launch
 
 @Composable
-fun MapScreen() {
+fun MapScreen(navController: NavController, userMail: String) {
+
+    val userViewModel: UserViewModel = viewModel()
+    var currUser by remember { mutableStateOf<User?>(null) }
+
+    LaunchedEffect(userMail) {
+        userViewModel.getUserInfo(userMail) { user ->
+            currUser = user // Update currUser with the fetched data
+        }
+    }
+
     val context = LocalContext.current
 
     // State to store user's location
@@ -112,25 +126,30 @@ fun MapScreen() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        Text(
+                            text = "Welcome " + currUser?.username,
+                            fontSize = 24.sp,
+                            color = Color.Gray
+                        )
                         Button(onClick = {
-                            // Handle Log-In click
+                            navController.navigate(Screens.HomeScreen.route)
                         }) {
-                            Text("Log-In")
+                            Text("HomePage")
                         }
                         Button(onClick = {
-                            // Handle Sign-Up click
+                            navController.navigate(Screens.Login.route)
                         }) {
-                            Text("Sign-Up")
+                            Text("Log-Out")
+                        }
+                        Button(onClick = {
+                            navController.navigate(Screens.Settings.route)
+                        }) {
+                            Text("Settings")
                         }
                         Button(onClick = {
                             // Handle Profile click
                         }) {
-                            Text("Profile")
-                        }
-                        Button(onClick = {
-                            // Handle HomePage click
-                        }) {
-                            Text("HomePage")
+                            Text("Example")
                         }
                     }
                 }
@@ -338,6 +357,7 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (LatLng) -> Unit) {
             }
         }
 
+        // Location Button
         AndroidView(
             factory = { context ->
                 val button = ImageButton(context).apply {

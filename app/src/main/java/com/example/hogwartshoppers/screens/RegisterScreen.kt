@@ -156,7 +156,9 @@ fun RegisterScreen(navController: NavController) {
                 )
 
                 TextButton(
-                    onClick = { /* Handle login click */ },
+                    onClick = {
+                        navController.navigate(Screens.Login.route)
+                    },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = Color(0xFFBB9753) // Default theme color
                     )

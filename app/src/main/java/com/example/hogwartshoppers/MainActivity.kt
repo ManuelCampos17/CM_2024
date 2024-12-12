@@ -55,11 +55,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.hogwartshoppers.screens.NavGraph
 import com.example.hogwartshoppers.screens.Screens
 import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
+import com.example.hogwartshoppers.viewmodels.UserViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -76,9 +78,14 @@ class MainActivity : ComponentActivity() {
 }
 @Composable
 fun Login(navController: NavController) {
+    val userViewModel: UserViewModel = viewModel()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -105,7 +112,7 @@ fun Login(navController: NavController) {
             TextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Username or Email Address") },
+                label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp) // This makes the corners rounded
             )
@@ -127,15 +134,44 @@ fun Login(navController: NavController) {
             // Login Button
             Button(
                 onClick = {
-                    navController.navigate(Screens.HomeScreen.route)
-                          },
+                    if(email.isNotBlank() && password.isNotBlank()){
+                        isLoading = true
+                        userViewModel.loginUser(email, password){ success ->
+                            isLoading = false
+                            if(success){
+                                navController.navigate(Screens.HomeScreen.route
+                                    .replace(
+                                        oldValue = "{email}",
+                                        newValue = email
+                                    )
+                                )
+                            }else{
+                                errorMessage = "Login failed: Email/Password are incorrect!"
+                            }
+                        }
+                    }else{
+                        errorMessage = "All fields are required"
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
                     .padding(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFBB9753))
             ) {
-                Text("Login")
+                if (isLoading) {
+                    Text("Validating...")
+                } else {
+                    Text("Login")
+                }
             }
+            if (errorMessage.isNotBlank()) {
+                Text(
+                    text = errorMessage,
+                    color = Color.Red,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,

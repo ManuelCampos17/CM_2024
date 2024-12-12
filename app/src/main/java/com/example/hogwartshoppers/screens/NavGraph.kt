@@ -21,8 +21,13 @@ fun NavGraph(navController: NavHostController) {
             RegisterScreen(navController = navController)
         }
 
-         composable(route = Screens.HomeScreen.route){
-            MapScreen()
-         }
+        composable(route = Screens.HomeScreen.route + "?email={email}"){ navBackStack ->
+            var email: String = navBackStack.arguments?.getString("email").toString()
+            MapScreen(navController = navController, userMail = email)
+        }
+
+        composable(route = Screens.Settings.route){
+            SettingsScreen(navController = navController)
+        }
     }
 }

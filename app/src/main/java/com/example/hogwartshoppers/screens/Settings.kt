@@ -55,10 +55,11 @@ import kotlinx.coroutines.NonCancellable.start
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(navController: NavController) {
 
     var coupon by remember { mutableStateOf("") }
     val isNotificationsEnabled = remember { mutableStateOf(false) }
@@ -86,24 +87,24 @@ fun SettingsScreen() {
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Button(onClick = {
-                            // Handle Log-In click
+                            navController.navigate(Screens.HomeScreen.route)
                         }) {
-                            Text("Log-In")
+                            Text("HomePage")
                         }
                         Button(onClick = {
-                            // Handle Sign-Up click
+                            navController.navigate(Screens.Login.route)
                         }) {
-                            Text("Sign-Up")
+                            Text("Log-Out")
+                        }
+                        Button(onClick = {
+                            navController.navigate(Screens.Settings.route)
+                        }) {
+                            Text("Settings")
                         }
                         Button(onClick = {
                             // Handle Profile click
                         }) {
-                            Text("Profile")
-                        }
-                        Button(onClick = {
-                            // Handle HomePage click
-                        }) {
-                            Text("HomePage")
+                            Text("Example")
                         }
                     }
                 }
@@ -290,10 +291,10 @@ fun SettingRow(label: String, state: MutableState<Boolean>) {
     }
 }
 
-@Composable
-@Preview(showBackground = true)
-fun SettingsScreenPreview() {
-    HogwartsHoppersTheme {
-        SettingsScreen()
-    }
-}
+//@Composable
+//@Preview(showBackground = true)
+//fun SettingsScreenPreview() {
+//    HogwartsHoppersTheme {
+//        SettingsScreen()
+//    }
+//}

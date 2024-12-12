@@ -1,7 +1,7 @@
 package com.example.hogwartshoppers.screens
 
 sealed class Screens (val route: String) {
-    object HomeScreen : Screens("home_screen")
+    object HomeScreen : Screens("home_screen/{email}")
     object Login : Screens("login_screen")
     object Register : Screens("register_screen")
     object Profile : Screens("profile_screen")
