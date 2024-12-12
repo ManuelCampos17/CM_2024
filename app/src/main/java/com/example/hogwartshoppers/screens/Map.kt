@@ -6,9 +6,15 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.widget.ImageButton
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -31,7 +38,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -45,6 +55,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.example.hogwartshoppers.R
+import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import kotlinx.coroutines.launch
@@ -55,6 +66,7 @@ fun MapScreen() {
 
     // State to store user's location
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
+    var selectedMarker by remember { mutableStateOf<LatLng?>(null) }
 
     // Check and request location permissions
     LaunchedEffect(Unit) {
@@ -128,7 +140,7 @@ fun MapScreen() {
         Scaffold(
             floatingActionButton = {
                 Box(
-                    modifier = Modifier.fillMaxSize() // Box to fill the available space
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     ExtendedFloatingActionButton(
                         text = { Text("") },
@@ -140,7 +152,7 @@ fun MapScreen() {
                                     .align(Alignment.CenterStart)
                                     .padding(start = 4.dp),
 
-                                tint = Color.White // Ensure the icon is visible against the container background
+                                tint = Color.White
                             )
                         },
                         onClick = {
@@ -162,11 +174,105 @@ fun MapScreen() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding) // Apply the inner padding
+                    .padding(innerPadding)
+                    .pointerInput(Unit) {
+                        detectTapGestures {
+                            selectedMarker = null
+                        }
+                    }
             ) {
                 // Show the map only if location is available
                 if (userLocation != null) {
-                    ShowGoogleMap(userLocation = userLocation!!)
+                    ShowGoogleMap(
+                        userLocation = userLocation!!,
+                        onMarkerClick = { marker ->
+                            selectedMarker = marker // Update the selected marker
+                        }
+                    )
+                }
+
+                // Overlay content for the selected marker
+                selectedMarker?.let { marker ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        // Background to intercept clicks
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0x80000000)) // Dimmed background
+                                .clickable(
+                                    onClick = {
+                                        selectedMarker = null // Dismiss overlay on background click
+                                    },
+                                    indication = null, // No ripple effect
+                                    interactionSource = remember { MutableInteractionSource() } // No interaction state
+                                )
+                        )
+
+                        // Overlay content
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(16.dp)
+                                .background(
+                                    color = Color(0xFF321F12), // Brown background
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp) // Rounded corners
+                                )
+                                .padding(16.dp)
+                                .fillMaxWidth()
+                        ) {
+                            Row {
+                                // Broom image
+                                androidx.compose.foundation.Image(
+                                    painter = painterResource(id = R.drawable.custom_marker), // Replace with your broom image resource
+                                    contentDescription = "Nimbus 2000",
+                                    modifier = Modifier.size(180.dp)
+                                        .padding(vertical = 30.dp)// Adjust size as necessary
+                                )
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.padding(vertical = 12.dp)
+                                ) {
+                                    // Broom details
+                                    Text(
+                                        text = "Nimbus 2000",
+                                        color = Color.White,
+                                        fontSize = 20.sp,
+                                        modifier = Modifier.padding(bottom = 4.dp)
+                                    )
+
+                                    Text(
+                                        text = "0.20 Galleon/Minute",
+                                        color = Color.White,
+                                        fontSize = 16.sp
+                                    )
+                                    Text(
+                                        text = "2560 km",
+                                        color = Color.White,
+                                        fontSize = 16.sp
+                                    )
+
+                                    // Accio Broom button
+                                    Button(
+                                        onClick = {
+                                            selectedMarker = null // Dismiss overlay on button click
+                                        },
+                                        modifier = Modifier
+                                            .padding(top = 8.dp)
+                                            .background(color = Color(0xFFDBC7A1),
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)), // Button color to match the image
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDBC7A1)) // Match image color
+                                    ) {
+                                        Text("Accio Broom", color = Color.Black) // Adjust text color if necessary
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -182,7 +288,7 @@ fun getScaledMarkerIcon(context: Context, drawableId: Int, width: Int, height: I
 }
 
 @Composable
-fun ShowGoogleMap(userLocation: LatLng) {
+fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (LatLng) -> Unit) {
     val cameraPositionState = rememberCameraPositionState {
         position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(userLocation, 17f)
     }
@@ -218,17 +324,20 @@ fun ShowGoogleMap(userLocation: LatLng) {
                 height = 100 // Set your desired height
             )
 
-            // Add markers with custom icons
+            // Add markers with click listener
             markerLocations.forEach { location ->
                 Marker(
                     state = MarkerState(position = location),
                     icon = customIcon,
-                    title = "Custom Marker"
+                    title = "Custom Marker",
+                    onClick = {
+                        onMarkerClick(location) // Trigger the callback
+                        true // Consume the click
+                    }
                 )
             }
         }
 
-        // Location Button
         AndroidView(
             factory = { context ->
                 val button = ImageButton(context).apply {
@@ -240,12 +349,29 @@ fun ShowGoogleMap(userLocation: LatLng) {
 
                     // Handle click event
                     setOnClickListener {
-                        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-                        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                            if (location != null) {
-                                val currentLatLng = LatLng(location.latitude, location.longitude)
-                                cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+                        if (ActivityCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            try {
+                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                    if (location != null) {
+                                        val currentLatLng = LatLng(location.latitude, location.longitude)
+                                        cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+                                    }
+                                }
+                            } catch (e: SecurityException) {
+                                e.printStackTrace() // Log or handle the exception appropriately
                             }
+                        } else {
+                            // Permission not granted, show an appropriate message or request permission
+                            Toast.makeText(
+                                context,
+                                "Location permission not granted. Please enable it in settings.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
                 }
