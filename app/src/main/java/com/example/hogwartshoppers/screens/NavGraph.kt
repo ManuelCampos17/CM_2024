@@ -22,12 +22,18 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable(route = Screens.HomeScreen.route + "?email={email}"){ navBackStack ->
-            var email: String = navBackStack.arguments?.getString("email").toString()
+            val email: String = navBackStack.arguments?.getString("email").toString()
             MapScreen(navController = navController, userMail = email)
         }
 
-        composable(route = Screens.Settings.route){
-            SettingsScreen(navController = navController)
+        composable(route = Screens.Settings.route + "?email={email}"){ navBackStack ->
+            val email: String = navBackStack.arguments?.getString("email").toString()
+            SettingsScreen(navController = navController, userMail = email)
+        }
+
+        composable(route = Screens.BroomDetails.route + "?email={email}"){ navBackStack ->
+            val email: String = navBackStack.arguments?.getString("email").toString()
+            BroomDetailsScreen(navController = navController, userMail = email)
         }
     }
 }

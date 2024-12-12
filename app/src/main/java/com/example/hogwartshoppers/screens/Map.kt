@@ -132,7 +132,12 @@ fun MapScreen(navController: NavController, userMail: String) {
                             color = Color.Gray
                         )
                         Button(onClick = {
-                            navController.navigate(Screens.HomeScreen.route)
+                            navController.navigate(Screens.HomeScreen.route
+                                .replace(
+                                    oldValue = "{email}",
+                                    newValue = currUser?.email.toString()
+                                )
+                            )
                         }) {
                             Text("HomePage")
                         }
@@ -142,7 +147,12 @@ fun MapScreen(navController: NavController, userMail: String) {
                             Text("Log-Out")
                         }
                         Button(onClick = {
-                            navController.navigate(Screens.Settings.route)
+                            navController.navigate(Screens.Settings.route
+                                .replace(
+                                    oldValue = "{email}",
+                                    newValue = currUser?.email.toString()
+                                )
+                            )
                         }) {
                             Text("Settings")
                         }
@@ -279,6 +289,12 @@ fun MapScreen(navController: NavController, userMail: String) {
                                     Button(
                                         onClick = {
                                             selectedMarker = null // Dismiss overlay on button click
+                                            navController.navigate(Screens.BroomDetails.route
+                                                .replace(
+                                                    oldValue = "{email}",
+                                                    newValue = currUser?.email.toString()
+                                                )
+                                            )
                                         },
                                         modifier = Modifier
                                             .padding(top = 8.dp)

@@ -55,11 +55,24 @@ import kotlinx.coroutines.NonCancellable.start
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.hogwartshoppers.model.User
+import com.example.hogwartshoppers.viewmodels.UserViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(navController: NavController, userMail: String) {
+
+    val userViewModel: UserViewModel = viewModel()
+    var currUser by remember { mutableStateOf<User?>(null) }
+
+    LaunchedEffect(userMail) {
+        userViewModel.getUserInfo(userMail) { user ->
+            currUser = user // Update currUser with the fetched data
+        }
+    }
 
     var coupon by remember { mutableStateOf("") }
     val isNotificationsEnabled = remember { mutableStateOf(false) }
@@ -70,14 +83,15 @@ fun SettingsScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = drawerState.isOpen || drawerState.isAnimationRunning,
         drawerContent = {
             ModalDrawerSheet(
                 modifier = Modifier
-                    .fillMaxHeight() // Ensure it fills the available height
+                    .fillMaxHeight()
                     .width(300.dp)
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize() // Box fills the available space
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     Column(
                         modifier = Modifier
@@ -86,8 +100,18 @@ fun SettingsScreen(navController: NavController) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        Text(
+                            text = "Welcome " + currUser?.username,
+                            fontSize = 24.sp,
+                            color = Color.Gray
+                        )
                         Button(onClick = {
-                            navController.navigate(Screens.HomeScreen.route)
+                            navController.navigate(Screens.HomeScreen.route
+                                .replace(
+                                    oldValue = "{email}",
+                                    newValue = currUser?.email.toString()
+                                )
+                            )
                         }) {
                             Text("HomePage")
                         }
@@ -97,7 +121,12 @@ fun SettingsScreen(navController: NavController) {
                             Text("Log-Out")
                         }
                         Button(onClick = {
-                            navController.navigate(Screens.Settings.route)
+                            navController.navigate(Screens.Settings.route
+                                .replace(
+                                    oldValue = "{email}",
+                                    newValue = currUser?.email.toString()
+                                )
+                            )
                         }) {
                             Text("Settings")
                         }
@@ -108,20 +137,27 @@ fun SettingsScreen(navController: NavController) {
                         }
                     }
                 }
-
             }
         },
     ) {
         Scaffold(
             floatingActionButton = {
                 Box(
-                    modifier = Modifier.fillMaxSize() // Box to fill available space
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     ExtendedFloatingActionButton(
                         text = { Text("") },
-                        icon = { Icon(Icons.Filled.Menu,
-                            contentDescription = "Menu",
-                            modifier = Modifier.size(60.dp))},
+                        icon = {
+                            Icon(
+                                Icons.Filled.Menu,
+                                contentDescription = "Menu",
+                                modifier = Modifier.size(50.dp)
+                                    .align(Alignment.CenterStart)
+                                    .padding(start = 4.dp),
+
+                                tint = Color.White
+                            )
+                        },
                         onClick = {
                             scope.launch {
                                 drawerState.apply {
@@ -130,12 +166,10 @@ fun SettingsScreen(navController: NavController) {
                             }
                         },
                         modifier = Modifier
-                            .padding(start = 20.dp, top = 20.dp)
-                            .align(Alignment.TopStart)
-                            .width(100.dp)
-                            .height(100.dp),
-                        containerColor = Color(0xff321f12), // Change the button color (purple in this case)
-                        contentColor = Color.White // Change the icon color to white
+                            .padding(start = 30.dp, top = 50.dp) // Adjust position on the screen
+                            .size(60.dp), // Make the button larger for better content alignment
+                        containerColor = Color(0xff321f12), // Brown background for the button
+                        contentColor = Color.White // White color for the content inside
                     )
                 }
             }
