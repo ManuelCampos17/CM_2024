@@ -378,60 +378,111 @@ fun MapScreen(navController: NavController, userMail: String) {
                                 )
                                 .padding(16.dp)
                                 .fillMaxWidth()
+                                .size(160.dp)
                         ) {
-                            Row {
-                                // Broom image
-                                androidx.compose.foundation.Image(
-                                    painter = painterResource(id = R.drawable.custom_marker), // Replace with your broom image resource
-                                    contentDescription = "Nimbus 2000",
-                                    modifier = Modifier.size(180.dp)
-                                        .padding(vertical = 30.dp)// Adjust size as necessary
-                                )
+                            // Broom details
+                            Text(
+                                text = "Nimbus 2000",
+                                color = Color.White,
+                                fontSize = 28.sp,
+                                modifier = Modifier
+                                    .padding(bottom = 16.dp)
+                                    .align(Alignment.TopCenter)
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .padding(top = 32.dp)
+                                    .fillMaxWidth(),
 
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.padding(vertical = 12.dp)
+                            ) {
+                                // Use Box to layer images
+                                Box(
+                                    modifier = Modifier.size(100.dp) // Size of the Box
                                 ) {
-                                    // Broom details
-                                    Text(
-                                        text = "Nimbus 2000",
-                                        color = Color.White,
-                                        fontSize = 20.sp,
-                                        modifier = Modifier.padding(bottom = 4.dp)
+                                    // Bottom image
+                                    Image(
+                                        painter = painterResource(id = R.drawable.background_for_broom), // Background image
+                                        contentDescription = "Broom Image",
+                                        modifier = Modifier.fillMaxSize() // Fills the Box
                                     )
 
-                                    Text(
-                                        text = "0.20 Galleon/Minute",
-                                        color = Color.White,
-                                        fontSize = 16.sp
-                                    )
-                                    Text(
-                                        text = "2560 km",
-                                        color = Color.White,
-                                        fontSize = 16.sp
-                                    )
-
-                                    // Accio Broom button
-                                    Button(
-                                        onClick = {
-                                            selectedMarker = null // Dismiss overlay on button click
-                                            navController.navigate(Screens.BroomDetails.route
-                                                .replace(
-                                                    oldValue = "{email}",
-                                                    newValue = currUser?.email.toString()
-                                                )
-                                            )
-                                        },
+                                    // Top image
+                                    Image(
+                                        painter = painterResource(id = R.drawable.nimbus_2000), // Replace with your overlay image resource
+                                        contentDescription = "Overlay Image",
                                         modifier = Modifier
-                                            .padding(top = 8.dp)
-                                            .background(color = Color(0xFFDBC7A1),
-                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)), // Button color to match the image
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDBC7A1)) // Match image color
+                                            .size(90.dp) // Adjust size of the overlay image
+                                            .align(Alignment.Center) // Center it on top of the background image
+                                    )
+                                }
+
+                                Column{
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.Start
+
                                     ) {
-                                        Text("Accio Broom", color = Color.Black) // Adjust text color if necessary
+                                        Image(
+                                            painter = painterResource(id = R.drawable.dolla_dolla),
+                                            contentDescription = "Dolla Dolla Logo",
+                                            modifier = Modifier
+                                                .size(48.dp)
+                                                .padding(start = 16.dp, end = 4.dp)
+                                                .align(Alignment.CenterVertically)
+                                        )
+
+                                        Text(
+                                            text = "0.20 Galleon/Minute",
+                                            color = Color.White,
+                                            fontSize = 18.sp,
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
+                                    }
+                                    Row(
+                                        horizontalArrangement = Arrangement.Start,
+                                        modifier = Modifier.offset(y = (-12).dp)
+                                    ) {
+                                        Image(
+                                            painter = painterResource(id = R.drawable.km_logo),
+                                            contentDescription = "KM Logo",
+                                            modifier = Modifier
+                                                .size(48.dp)
+                                                .padding(start = 16.dp, end = 4.dp)
+                                                .align(Alignment.CenterVertically)
+                                        )
+
+                                        Text(
+                                            text = "2560 km",
+                                            color = Color.White,
+                                            fontSize = 18.sp,
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
                                     }
                                 }
+                            }
+
+                            // Accio Broom button
+                            Button(
+                                onClick = {
+                                    selectedMarker = null // Dismiss overlay on button click
+                                    navController.navigate(Screens.BroomDetails.route
+                                        .replace(
+                                            oldValue = "{email}",
+                                            newValue = currUser?.email.toString()
+                                        )
+                                    )
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(top = 8.dp)
+                                    .background(color = Color(0xFFDBC7A1),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)), // Button color to match the image
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDBC7A1)) // Match image color
+                            ) {
+                                Text(text = "Accio Broom",
+                                    color = Color(0xFF321F12),
+                                    fontSize = 18.sp,
+                                )
                             }
                         }
                     }
