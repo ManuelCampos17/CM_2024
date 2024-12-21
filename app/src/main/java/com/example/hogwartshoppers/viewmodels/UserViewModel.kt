@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.hogwartshoppers.model.User
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.firebase.database.FirebaseDatabase
 
 
@@ -21,6 +20,8 @@ class UserViewModel: ViewModel(){
 
     private val db: FirebaseDatabase = FirebaseDatabase.getInstance()
     val usersRef = db.reference.child("Users")
+    val friendsRef = db.reference.child("Friends")
+    val friendsReqRef = db.reference.child("Friend_Requests")
 
     var userUiState: UserUIState by mutableStateOf(UserUIState.Loading)
         private set
@@ -115,10 +116,111 @@ class UserViewModel: ViewModel(){
         }
     }
 
-
+    // Function to update user info (Needs to receive a User object with the updated info)
     fun updateUser(user: User){
-        val userRef = usersRef.child(user.username)
+        val userRef = usersRef.child(user.email)
         userRef.setValue(user)
+    }
+
+    // função para atualizar a distancia
+    fun updateUserDistance(email: String, distance: Double){
+        val userRef = usersRef.child(email)
+        userRef.child("distance").setValue(distance)
+    }
+
+    // função para atualizar a house
+    fun updateUserHouse(email: String, house: String){
+        val userRef = usersRef.child(email)
+        userRef.child("house").setValue(house)
+    }
+
+    // função para atualizar a house
+    fun updateUserRecords(email: String, records: Int){
+        val userRef = usersRef.child(email)
+        userRef.child("records").setValue(records)
+    }
+
+    // Funcao para adicionar request a uma pessoa
+    // email -> email da pessoa que vai receber o request
+    // friendEmail -> email da pessoa que vai enviar o request
+    fun addFriendRequest(email: String, friendEmail: String, callback: (Boolean) -> Unit) {
+        // Get the reference for the user's friend requests
+        val userFriendRequestsRef = friendsReqRef.child(email)
+
+        // Fetch the existing requests for the user
+        userFriendRequestsRef.get().addOnSuccessListener { snapshot ->
+            // If the user doesn't have a "requests" node yet, initialize it
+            val currentRequests = snapshot.child("requests").value as? List<String> ?: emptyList()
+
+            // Check if the friendEmail is already in the requests list
+            if (friendEmail in currentRequests) {
+                callback(false) // Friend request already exists
+            } else {
+                // Add the friendEmail to the list
+                val updatedRequests = currentRequests + friendEmail
+                userFriendRequestsRef.child("requests").setValue(updatedRequests)
+                    .addOnSuccessListener {
+                        callback(true) // Successfully added the friend request
+                    }
+                    .addOnFailureListener {
+                        callback(false) // Failed to add the friend request
+                    }
+            }
+        }.addOnFailureListener {
+            // If fetching the user's requests node fails, handle the error
+            callback(false) // Failed to fetch existing requests
+        }
+    }
+
+    // funcao para dar get de todos os friend requests
+    fun getFriendRequests(email: String, callback: (List<String>?) -> Unit) {
+        val userFriendRequestsRef = friendsReqRef.child(email)
+        userFriendRequestsRef.get().addOnSuccessListener { snapshot ->
+            val requests = snapshot.child("requests").value as? List<String>
+            callback(requests)
+        }.addOnFailureListener {
+            callback(null)
+        }
+    }
+
+    // funcao para aceitar uma request
+    // email -> email da pessoa que aceitou o request
+    // friendEmail -> email da pessoa que enviou o request
+    fun acceptFriendRequest(email: String, friendEmail: String, callback: (Boolean) -> Unit) {
+        val userFriendRequestsRef = friendsReqRef.child(email)
+        val userFriendsRef = friendsRef.child(email)
+
+        // Fetch the recipient's friend requests
+        userFriendRequestsRef.child("requests").get().addOnSuccessListener { snapshot ->
+            val currentRequests = snapshot.value as? List<String> ?: emptyList()
+
+            if (friendEmail !in currentRequests) {
+                callback(false) // Friend request doesn't exist
+                return@addOnSuccessListener
+            }
+
+            // Remove the accepted friend request
+            val updatedRequests = currentRequests.filter { it != friendEmail }
+            userFriendRequestsRef.child("requests").setValue(updatedRequests).addOnSuccessListener {
+                // Update the recipient's friends list
+                userFriendsRef.child("friends").get().addOnSuccessListener { userSnapshot ->
+                    val userFriends = userSnapshot.value as? List<String> ?: emptyList()
+                    val updatedUserFriends = userFriends + friendEmail
+
+                    userFriendsRef.child("friends").setValue(updatedUserFriends).addOnSuccessListener {
+                        callback(true) // Successfully updated the recipient's data
+                    }.addOnFailureListener {
+                        callback(false) // Failed to update the recipient's friends list
+                    }
+                }.addOnFailureListener {
+                    callback(false) // Failed to fetch the recipient's friends list
+                }
+            }.addOnFailureListener {
+                callback(false) // Failed to remove the friend request
+            }
+        }.addOnFailureListener {
+            callback(false) // Failed to fetch the recipient's friend requests
+        }
     }
 
 }

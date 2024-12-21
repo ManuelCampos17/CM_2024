@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FriendRequests(
-    val username1: String,
-    val username2: String
+    val email: String,
+    val requests: List<String> // email das pessoas que enviaram a solicitação
 )
