@@ -123,10 +123,26 @@ class UserViewModel: ViewModel(){
     }
 
     // função para atualizar a distancia
-    fun updateUserDistance(email: String, distance: Double){
+    fun updateUserDistance(email: String, distance: Double) {
         val userRef = usersRef.child(email)
-        userRef.child("distance").setValue(distance)
+
+        // Get the current distance from the database
+        userRef.child("distance").get().addOnSuccessListener { snapshot ->
+            val currentDistance = when (val value = snapshot.value) {
+                is Double -> value  // If it's already a Double
+                is Long -> value.toDouble()  // If it's a Long, convert it to Double
+                is Int -> value.toDouble()  // If it's an Int, convert it to Double
+                else -> 0.0  // If the value is something else (null or unexpected type), default to 0.0
+            }
+
+            // Calculate the new distance by summing the old and new distances
+            val newDistance = currentDistance + distance
+
+            // Update the database with the new distance
+            userRef.child("distance").setValue(newDistance)
+        }
     }
+
 
     // função para atualizar a house
     fun updateUserHouse(email: String, house: String){
