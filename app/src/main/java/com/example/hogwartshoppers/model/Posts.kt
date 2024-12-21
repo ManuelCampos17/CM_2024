@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Posts(
-    val username: String,
+    val userEmail: String,
     val title: String,
     val text: String
 )
