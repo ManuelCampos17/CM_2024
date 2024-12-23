@@ -35,5 +35,16 @@ fun NavGraph(navController: NavHostController) {
             val email: String = navBackStack.arguments?.getString("email").toString()
             BroomDetailsScreen(navController = navController, userMail = email)
         }
+
+        composable(route = Screens.Profile.route + "?email={email}"){ navBackStack ->
+            val email: String = navBackStack.arguments?.getString("email").toString()
+            //ProfileScreen(navController = navController, userMail = email)
+        }
+
+        composable(route = Screens.Friends.route + "?email={email}" + "&acceptedRequest={acceptedRequest}"){ navBackStack ->
+            val email: String = navBackStack.arguments?.getString("email").toString()
+            val acceptedRequest = navBackStack.arguments?.getString("acceptedRequest").toBoolean()
+            FriendsScreen(navController = navController, userMail = email, acceptedRequest = acceptedRequest)
+        }
     }
 }

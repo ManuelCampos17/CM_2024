@@ -10,7 +10,7 @@ sealed class Screens (val route: String) {
     object CustomizeBroom : Screens("customize_broom_screen")
     object SpecialPerk : Screens("special_perk_screen")
     object Forum : Screens("forum_screen")
-    object Friends : Screens("friends_screen")
+    object Friends : Screens("friends_screen/{email}/{acceptedRequest}")
     object Race : Screens("race_screen")
     object Settings : Screens("settings_screen/{email}")
     object Payment : Screens("payment_screen")

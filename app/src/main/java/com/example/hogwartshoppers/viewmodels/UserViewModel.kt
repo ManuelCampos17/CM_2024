@@ -161,7 +161,7 @@ class UserViewModel: ViewModel(){
     // friendEmail -> email da pessoa que vai enviar o request
     fun addFriendRequest(email: String, friendEmail: String, callback: (Boolean) -> Unit) {
         // Get the reference for the user's friend requests
-        val userFriendRequestsRef = friendsReqRef.child(email)
+        val userFriendRequestsRef = friendsReqRef.child(email.replace(".", "|"))
 
         // Fetch the existing requests for the user
         userFriendRequestsRef.get().addOnSuccessListener { snapshot ->
@@ -190,9 +190,11 @@ class UserViewModel: ViewModel(){
 
     // funcao para dar get de todos os friend requests
     fun getFriendRequests(email: String, callback: (List<String>?) -> Unit) {
-        val userFriendRequestsRef = friendsReqRef.child(email)
+        val userFriendRequestsRef = friendsReqRef.child(email.replace(".", "|"))
         userFriendRequestsRef.get().addOnSuccessListener { snapshot ->
-            val requests = snapshot.child("requests").value as? List<String>
+            val requestsTemp = snapshot.child("requests").value as? List<String>
+            // for each request replace "|" with "."
+            val requests = requestsTemp?.map { it.replace("|", ".") }
             callback(requests)
         }.addOnFailureListener {
             callback(null)
@@ -203,8 +205,9 @@ class UserViewModel: ViewModel(){
     // email -> email da pessoa que aceitou o request
     // friendEmail -> email da pessoa que enviou o request
     fun acceptFriendRequest(email: String, friendEmail: String, callback: (Boolean) -> Unit) {
-        val userFriendRequestsRef = friendsReqRef.child(email)
-        val userFriendsRef = friendsRef.child(email)
+        val userFriendRequestsRef = friendsReqRef.child(email.replace(".", "|"))
+        val userFriendsRef = friendsRef.child(email.replace(".", "|"))
+        val friendRef = friendsRef.child(friendEmail.replace(".", "|"))
 
         // Fetch the recipient's friend requests
         userFriendRequestsRef.child("requests").get().addOnSuccessListener { snapshot ->
@@ -231,6 +234,21 @@ class UserViewModel: ViewModel(){
                 }.addOnFailureListener {
                     callback(false) // Failed to fetch the recipient's friends list
                 }
+
+                // Update the recipient's friends list
+                friendRef.child("friends").get().addOnSuccessListener { userSnapshot ->
+                    val userFriendFriends = userSnapshot.value as? List<String> ?: emptyList()
+                    val updatedUserFriendFriends = userFriendFriends + email
+
+                    friendRef.child("friends").setValue(updatedUserFriendFriends).addOnSuccessListener {
+                        callback(true) // Successfully updated the recipient's data
+                    }.addOnFailureListener {
+                        callback(false) // Failed to update the recipient's friends list
+                    }
+                }.addOnFailureListener {
+                    callback(false) // Failed to fetch the recipient's friends list
+                }
+
             }.addOnFailureListener {
                 callback(false) // Failed to remove the friend request
             }
@@ -239,4 +257,15 @@ class UserViewModel: ViewModel(){
         }
     }
 
+    fun getFriends(email: String, callback: (List<String>?) -> Unit) {
+        val userFriendsRef = friendsRef.child(email.replace(".", "|"))
+        userFriendsRef.get().addOnSuccessListener { snapshot ->
+            val friendsTemp = snapshot.child("friends").value as? List<String>
+            // for each request replace "|" with "."
+            val friends = friendsTemp?.map { it.replace("|", ".") }
+            callback(friends)
+        }.addOnFailureListener {
+            callback(null)
+        }
+    }
 }
