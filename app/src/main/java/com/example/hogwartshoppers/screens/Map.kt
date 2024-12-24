@@ -6,8 +6,14 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.location.Location
 import android.util.Log
 import android.widget.ImageButton
+import android.widget.Space
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,6 +24,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +33,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
@@ -42,8 +50,10 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -54,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
+import androidx.core.graphics.rotationMatrix
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.android.gms.location.LocationServices
@@ -68,6 +79,7 @@ import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
 import kotlinx.coroutines.launch
 
 @Composable
@@ -83,6 +95,16 @@ fun MapScreen(navController: NavController, userMail: String) {
     }
 
     val context = LocalContext.current
+
+    var speed by remember { mutableStateOf(0f) }
+    var smoothedSpeed by remember { mutableStateOf(0f) }
+    var lastLocation by remember { mutableStateOf<Location?>(null) }
+    var lastTime by remember { mutableStateOf(0L) }
+
+    // Smooth the speed using a low-pass filter
+    LaunchedEffect(speed) {
+        smoothedSpeed = smoothedSpeed * 0.8f + speed * 0.2f
+    }
 
     // State to store user's location
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
@@ -103,11 +125,66 @@ fun MapScreen(navController: NavController, userMail: String) {
         } else {
             // Fetch user's location
             val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
                     userLocation = LatLng(location.latitude, location.longitude)
                 }
             }
+
+            val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
+                com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, 500L
+            ).setMinUpdateIntervalMillis(300L).build()
+
+            val locationCallback = object : com.google.android.gms.location.LocationCallback() {
+                override fun onLocationResult(locationResult: com.google.android.gms.location.LocationResult) {
+                    val newLocation = locationResult.lastLocation
+                    val currentTime = System.currentTimeMillis()
+
+                    if (lastLocation != null && newLocation != null) {
+                        val distance = lastLocation!!.distanceTo(newLocation) // Distance in meters
+                        val timeElapsed = (currentTime - lastTime) / 1000f // Time in seconds
+                        speed = if (timeElapsed > 0) (distance / timeElapsed) * 3.6f else 0f // Convert to km/h
+                    }
+
+                    lastLocation = newLocation
+                    lastTime = currentTime
+                }
+            }
+
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+        }
+    }
+
+    LaunchedEffect(speed) {
+        smoothedSpeed = smoothedSpeed * 0.9f + speed * 0.1f
+    }
+
+    var pressure by remember { mutableStateOf(0f) } // State to store pressure value
+    val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
+
+    DisposableEffect(Unit) {
+        val pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
+        val sensorEventListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event?.sensor?.type == Sensor.TYPE_PRESSURE) {
+                    pressure = event.values[0] // Atmospheric pressure in hPa
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+
+        if (pressureSensor != null) {
+            sensorManager.registerListener(
+                sensorEventListener,
+                pressureSensor,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
+        }
+
+        onDispose {
+            sensorManager.unregisterListener(sensorEventListener)
         }
     }
 
@@ -213,9 +290,70 @@ fun MapScreen(navController: NavController, userMail: String) {
                     ShowGoogleMap(
                         userLocation = userLocation!!,
                         onMarkerClick = { marker ->
-                            selectedMarker = marker // Update the selected marker
+                            selectedMarker = marker
                         }
                     )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(20.dp)
+                        .background(
+                            color = Color(0xFF4C372A),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_altitude),
+                                contentDescription = "Altitude Icon",
+                                tint = Color.White,
+                                modifier = Modifier.size(30.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            Text(
+                                text = "${"%.0f".format(SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, pressure))} m",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                        }
+
+                        Divider(
+                            modifier = Modifier
+                                .height(30.dp)
+                                .width(1.5.dp),
+                            color = Color.White
+                        )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_speedometer),
+                                contentDescription = "Speed Icon",
+                                tint = Color.White,
+                                modifier = Modifier.size(30.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            Text(
+                                text = "${"%.0f".format(smoothedSpeed)} km/h",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
                 }
 
                 // Overlay content for the selected marker
@@ -374,17 +512,23 @@ fun getScaledMarkerIcon(context: Context, drawableId: Int, width: Int, height: I
 @Composable
 fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (LatLng) -> Unit) {
     val cameraPositionState = rememberCameraPositionState {
-        position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(userLocation, 17f)
+        position = CameraPosition.fromLatLngZoom(userLocation, 17f)
     }
 
     // Define marker locations close to the user's location
-    val markerLocations = listOf(
-        LatLng(userLocation.latitude + 0.001, userLocation.longitude), // North
-        LatLng(userLocation.latitude - 0.001, userLocation.longitude), // South
-        LatLng(userLocation.latitude, userLocation.longitude + 0.001), // East
-        LatLng(userLocation.latitude, userLocation.longitude - 0.001), // West
-        LatLng(userLocation.latitude + 0.0007, userLocation.longitude + 0.0007) // Northeast
-    )
+    val markerLocations = remember {
+        mutableStateOf(
+            listOf(
+                LatLng(userLocation.latitude + 0.001, userLocation.longitude), // North
+                LatLng(userLocation.latitude - 0.001, userLocation.longitude), // South
+                LatLng(userLocation.latitude, userLocation.longitude + 0.001), // East
+                LatLng(userLocation.latitude, userLocation.longitude - 0.001), // West
+                LatLng(userLocation.latitude + 0.0007, userLocation.longitude + 0.0007) // Northeast
+            )
+        )
+    }
+
+    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         // GoogleMap composable
@@ -393,30 +537,42 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (LatLng) -> Unit) {
             uiSettings = remember {
                 com.google.maps.android.compose.MapUiSettings(
                     myLocationButtonEnabled = false,
-                    zoomControlsEnabled = false // Disable default zoom controls
+                    zoomControlsEnabled = false,
+                    compassEnabled = true
                 )
             },
             properties = remember {
                 com.google.maps.android.compose.MapProperties(isMyLocationEnabled = true)
             },
-            modifier = Modifier.matchParentSize() // Fill the entire Box
+            modifier = Modifier.matchParentSize()
         ) {
-            val customIcon = getScaledMarkerIcon(
-                context = LocalContext.current,
-                drawableId = R.drawable.custom_marker, // Your custom drawable
-                width = 100, // Set your desired width
-                height = 100 // Set your desired height
-            )
+            val customIcon = remember {
+                getScaledMarkerIcon(
+                    context = context,
+                    drawableId = R.drawable.custom_marker,
+                    width = 100,
+                    height = 100
+                )
+            }
 
-            // Add markers with click listener
-            markerLocations.forEach { location ->
+            LaunchedEffect(userLocation) {
+                markerLocations.value = listOf(
+                    LatLng(userLocation.latitude + 0.001, userLocation.longitude), // North
+                    LatLng(userLocation.latitude - 0.001, userLocation.longitude), // South
+                    LatLng(userLocation.latitude, userLocation.longitude + 0.001), // East
+                    LatLng(userLocation.latitude, userLocation.longitude - 0.001), // West
+                    LatLng(userLocation.latitude + 0.0007, userLocation.longitude + 0.0007) // Northeast
+                )
+            }
+
+            markerLocations.value.forEach { location ->
                 Marker(
                     state = MarkerState(position = location),
                     icon = customIcon,
                     title = "Custom Marker",
                     onClick = {
-                        onMarkerClick(location) // Trigger the callback
-                        true // Consume the click
+                        onMarkerClick(location)
+                        true // Consume click
                     }
                 )
             }
