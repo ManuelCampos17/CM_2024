@@ -161,7 +161,12 @@ fun Menu(navController: NavController, currUserEmail: String?) {
         }
 
         Button(onClick = {
-            navController.navigate(Screens.Login.route)
+            navController.navigate(Screens.Profile.route
+                .replace(
+                    oldValue = "{email}",
+                    newValue = currUserEmail.toString()
+                )
+            )
         },
             modifier = Modifier.fillMaxWidth(),
             shape = RectangleShape,
@@ -183,7 +188,7 @@ fun Menu(navController: NavController, currUserEmail: String?) {
                 )
 
                 Text(
-                    text = "Log-Out",
+                    text = "Profile",
                     style = TextStyle(fontSize = 18.sp) // Increases the font size
                 )
             }
