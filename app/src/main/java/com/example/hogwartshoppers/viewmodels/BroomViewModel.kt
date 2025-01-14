@@ -100,7 +100,7 @@ class BroomViewModel: ViewModel() {
     // comecar uma viagem
     fun startTrip(userEmail: String, broomName: String) {
         // Generate a unique rentalId for this new trip
-        val rentalId = tripsRef.child(userEmail).push().key
+        val rentalId = tripsRef.child(userEmail.replace(".", "|")).push().key
 
         // Check if rentalId is not null
         rentalId?.let {
@@ -118,7 +118,7 @@ class BroomViewModel: ViewModel() {
             )
 
             // Save the new BroomTrip to the database
-            tripsRef.child(userEmail).child(it).setValue(broomTrip)
+            tripsRef.child(userEmail.replace(".", "|")).child(it).setValue(broomTrip)
 
             updateAvailable(broomName,false)
         }
@@ -127,7 +127,7 @@ class BroomViewModel: ViewModel() {
     // acabar uma trip
     fun endTrip(userEmail: String, distance: Double, callback: (Boolean) -> Unit) {
         // Fetch the last trip for the user
-        tripsRef.child(userEmail)
+        tripsRef.child(userEmail.replace(".", "|"))
             .orderByKey()  // Order by key (ID)
             .limitToLast(1)  // Get only the last one (most recent)
             .get()
@@ -137,7 +137,7 @@ class BroomViewModel: ViewModel() {
 
                 if (lastId != null) {
                     // Fetch the last trip to update its values
-                    val tripRef = tripsRef.child(userEmail).child(lastId)
+                    val tripRef = tripsRef.child(userEmail.replace(".", "|")).child(lastId)
 
                     // Get the current distance of the trip
                     tripRef.get().addOnSuccessListener { tripSnapshot ->
@@ -181,7 +181,7 @@ class BroomViewModel: ViewModel() {
 
     // funcao para dar get das trips de um user
     fun getTrips(userEmail: String, callback: (List<BroomTrip>?) -> Unit) {
-        tripsRef.child(userEmail).get().addOnSuccessListener { snapshot ->
+        tripsRef.child(userEmail.replace(".", "|")).get().addOnSuccessListener { snapshot ->
             // List to hold all the mapped BroomTrip objects
             val broomTripList = mutableListOf<BroomTrip>()
 
@@ -215,6 +215,65 @@ class BroomViewModel: ViewModel() {
         }
     }
 
+    // funcao para verificar se um user esta a andar
+    fun isUserRiding(userEmail: String, callback: (Boolean) -> Unit) {
+        tripsRef.child(userEmail.replace(".", "|"))
+            .orderByKey()
+            .limitToLast(1)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val lastId = snapshot.children.firstOrNull()?.key
+                if (lastId != null) {
+                    // Fetch the last trip
+                    val tripRef = tripsRef.child(userEmail.replace(".", "|")).child(lastId)
+                    tripRef.get().addOnSuccessListener { tripSnapshot ->
+                        val active = tripSnapshot.child("active").getValue(Boolean::class.java) ?: false
+                        callback(active)
+                    }
+                } else {
+                    // No trips found, return false
+                    callback(false)
+                }
+            }
+            .addOnFailureListener {
+                callback(false)
+            }
+    }
+
+    // get last broom trip
+    fun getLastTrip(userEmail: String, callback: (BroomTrip?) -> Unit) {
+        tripsRef.child(userEmail.replace(".", "|"))
+            .orderByKey()
+            .limitToLast(1)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val lastId = snapshot.children.firstOrNull()?.key
+                if (lastId != null) {
+                    val tripRef = tripsRef.child(userEmail.replace(".", "|")).child(lastId)
+                    tripRef.get().addOnSuccessListener { tripSnapshot ->
+                        val broomTrip = BroomTrip(
+                            broomName = tripSnapshot.child("broomName").value as? String ?: "",
+                            user = tripSnapshot.child("user").value as? String ?: "",
+                            distance = convertToDouble(tripSnapshot.child("distance").value),
+                            date = tripSnapshot.child("date").value as? String ?: "",
+                            time = tripSnapshot.child("time").value as? String ?: "",
+                            price = convertToDouble(tripSnapshot.child("price").value),
+                            active = tripSnapshot.child("active").value as? Boolean ?: false,
+                            size = tripSnapshot.child("size").value as? String ?: "",
+                            charms = tripSnapshot.child("charms").value as? String ?: ""
+                        )
+                        callback(broomTrip)
+                    }.addOnFailureListener {
+                        callback(null)
+                    }
+                } else {
+                    callback(null)
+                }
+            }
+            .addOnFailureListener {
+                callback(null)
+            }
+    }
 
     // Example helper functions:
     private fun getCurrentDate(): String {
