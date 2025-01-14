@@ -13,4 +13,5 @@ sealed class Screens (val route: String) {
     object Race : Screens("race_screen")
     object Settings : Screens("settings_screen/{email}")
     object Payment : Screens("payment_screen")
+    object RaceConditions : Screens("race_conditions_screen/{email}/{friendEmail}")
 }

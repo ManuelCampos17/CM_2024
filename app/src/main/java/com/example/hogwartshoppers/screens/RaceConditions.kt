@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -64,21 +65,24 @@ import com.example.hogwartshoppers.viewmodels.UserViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(navController: NavController, userMail: String) {
+fun RaceConditions(navController: NavController, userMail: String, friendEmail: String) {
 
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
+    var friend by remember { mutableStateOf<User?>(null) }
 
     LaunchedEffect(userMail) {
         userViewModel.getUserInfo(userMail) { user ->
             currUser = user // Update currUser with the fetched data
         }
+
+        userViewModel.getUserInfo(friendEmail) { user ->
+            friend = user // Update friend with the fetched data
+        }
     }
 
-    var coupon by remember { mutableStateOf("") }
-    val isNotificationsEnabled = remember { mutableStateOf(false) }
-    val isIconsVisible = remember { mutableStateOf(false) }
-    val isSafetyFeatureEnabled = remember { mutableStateOf(true) }
+    val isTimeEnabled = remember { mutableStateOf(false) }
+    val isMagicAllowed = remember { mutableStateOf(false) }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -144,7 +148,8 @@ fun SettingsScreen(navController: NavController, userMail: String) {
                             Icon(
                                 Icons.Filled.Menu,
                                 contentDescription = "Menu",
-                                modifier = Modifier.size(50.dp)
+                                modifier = Modifier
+                                    .size(50.dp)
                                     .align(Alignment.CenterStart)
                                     .padding(start = 4.dp),
 
@@ -203,7 +208,7 @@ fun SettingsScreen(navController: NavController, userMail: String) {
 
                     ) {
                         Text(
-                            text = "Settings",
+                            text = "Race Conditions",
                             color = Color.White
                         )
                     }
@@ -220,29 +225,23 @@ fun SettingsScreen(navController: NavController, userMail: String) {
                         horizontalAlignment = Alignment.CenterHorizontally // Centers the buttons horizontally
                     ) {
 
-                        Spacer(modifier = Modifier.height(28.dp))
-                        SettingRow("Turn OFF/ON Notifications", isNotificationsEnabled)
-                        SettingRow("Show icons while flying", isIconsVisible)
-                        SettingRow("Safety Features", isSafetyFeatureEnabled)
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        Text(text = "Enter Coupon:",
+
+                        Text(
+                            text = "Note:",
                             color = Color(0xff4b2f1b),
-                            modifier = Modifier
-                                .align(Alignment.Start)
-                                .padding(start = 30.dp),
-                            style = TextStyle(
-                                fontSize = 22.sp // Specify the size in `sp` (scale-independent pixels)
+                            modifier = Modifier.padding(start = 5.dp, end = 300.dp),
+                            fontSize = 12.sp,
                             )
-                        )
 
-                        TextField(
-                            value = coupon,
-                            onValueChange = { coupon = it },
-                            label = { Text("Coupon") },
-                            modifier = Modifier
-                                .size(275.dp, 50.dp),
-                            shape = RoundedCornerShape(30.dp) // This makes the corners rounded
-                        )
+                        Text(
+                            text = "If you want a fair race, make sure you and the person you invited" +
+                                    " are both at the same location.",
+                            color = Color(0xff4b2f1b),
+                            modifier = Modifier.padding(start = 10.dp).offset(y = (-10).dp),
+                            fontSize = 18.sp
+                            )
 
                         Button(
                             onClick = {},
@@ -254,20 +253,74 @@ fun SettingsScreen(navController: NavController, userMail: String) {
                                 containerColor = Color(0xff4b2f1b)
                             )
                         ) {
-                            Text("Payment Options")
+                            Text("Select finish line")
                         }
 
-                        // Sign Out Button
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly, // Space images evenly
+                            verticalAlignment = Alignment.CenterVertically // Align images vertically in the center
+                        ) {
+                            // First Image with texts below
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
+                                    contentDescription = "Default Ahh",
+                                    modifier = Modifier.size(100.dp)
+                                        .clip(CircleShape) // Make the image circular
+                                        .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
+                                )
+                                Text(text = "${currUser?.username}", fontSize = 12.sp, color = Color.Black) // First text
+                            }
+
+                            // Second image: "vs"
+                            Image(
+                                painter = painterResource(id = R.drawable.vs), // Replace with your drawable resource
+                                contentDescription = "VS",
+                                modifier = Modifier.size(75.dp) // Adjust size as needed
+                            )
+
+                            // Second Image with texts below
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
+                                    contentDescription = "Default Ahh",
+                                    modifier = Modifier.size(100.dp)
+                                        .clip(CircleShape) // Make the image circular
+                                        .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
+                                )
+                                Text(text = "${friend?.username}", fontSize = 12.sp, color = Color.Black) // First text
+                            }
+                        }
+
                         Button(
-                            onClick = {},
+                            onClick = {
+                                navController.navigate(
+                                    Screens.Friends.route
+                                        .replace(
+                                            oldValue = "{email}",
+                                            newValue = userMail
+                                        )
+                                        .replace(
+                                            oldValue = "{acceptedRequest}",
+                                            newValue = "false"
+                                        )
+                                )
+                            },
                             modifier = Modifier
                                 .size(275.dp, 35.dp)
                                 .fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xff4b2f1b)
+                                containerColor = Color(0xffe22134)
                             )
                         ) {
-                            Text("Sign Out")
+                            Text("Cancel Race")
                         }
 
                         Button(
@@ -277,10 +330,10 @@ fun SettingsScreen(navController: NavController, userMail: String) {
                                 .fillMaxWidth()
                                 .padding(bottom = 16.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xffe22134)
+                                containerColor = Color(0xff44ba3c)
                             )
                         ) {
-                            Text("AVADA KEDAVRA your account")
+                            Text("Start race against ${friend?.username}")
                         }
                     }
                 }
@@ -290,11 +343,12 @@ fun SettingsScreen(navController: NavController, userMail: String) {
 }
 
 @Composable
-fun SettingRow(label: String, state: MutableState<Boolean>) {
+fun ConditionsRow(label: String, state: MutableState<Boolean>) {
     Row(horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-                            .padding(start = 20.dp)) {
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 20.dp)) {
         Text(text = label,
             modifier = Modifier.weight(1f),
             color = Color(0xff4b2f1b),
@@ -316,11 +370,3 @@ fun SettingRow(label: String, state: MutableState<Boolean>) {
         )
     }
 }
-
-//@Composable
-//@Preview(showBackground = true)
-//fun SettingsScreenPreview() {
-//    HogwartsHoppersTheme {
-//        SettingsScreen()
-//    }
-//}

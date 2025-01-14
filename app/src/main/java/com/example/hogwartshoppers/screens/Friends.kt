@@ -315,6 +315,7 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                                     friendsEmails?.let {
                                         items(it.size) { index ->
                                             FriendBox(
+                                                userEmail =userMail,
                                                 email = it[index],
                                                 navController = navController
                                             )
@@ -413,9 +414,7 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                                 Button(
                                     onClick = {
                                         if (emailInput.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(emailInput).matches() && emailInput != userMail)
-                                        { // isto ta muito estranho, se mais tarde der erro no send request é aqui de certeza
-                                            // a logica ta feita ao contrario por algum motivo, mas se somehow friendsEmails?.contains(emailInput) der true é quando aceitamos por algum motivo
-                                            // ou seja quando o email ja esta na lista de amigos, supostamente nao queremos adicionar mas isso ta ao contrario mas funciona somehow
+                                        {
                                             if (friendsEmails?.contains(emailInput) == false) {
                                                 userViewModel.addFriendRequest(
                                                     email = emailInput,
@@ -460,7 +459,7 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
 }
 
 @Composable
-fun FriendBox(email: String, navController: NavController) {
+fun FriendBox(userEmail: String,email: String, navController: NavController) {
     val userViewModel: UserViewModel = viewModel()
     var friend by remember { mutableStateOf<User?>(null) }
 
@@ -544,8 +543,7 @@ fun FriendBox(email: String, navController: NavController) {
                     // Button for "Challenge for Race"
                     Button(
                         onClick = {
-                            // Challenge for race action
-                            // Implement your challenge logic here
+                            navController.navigate("race_conditions_screen/${userEmail}/${f.email}")
                         },
                         modifier = Modifier.weight(1f), // Take equal space on each side of the Row
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
@@ -662,11 +660,3 @@ fun FriendRequestItem(
         }
     }
 }
-
-//@Composable
-//@Preview(showBackground = true)
-//fun SettingsScreenPreview() {
-//    HogwartsHoppersTheme {
-//        SettingsScreen()
-//    }
-//}
