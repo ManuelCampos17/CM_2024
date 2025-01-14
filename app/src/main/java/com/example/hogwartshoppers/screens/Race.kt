@@ -56,6 +56,7 @@ import kotlinx.coroutines.NonCancellable.start
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -65,7 +66,7 @@ import com.example.hogwartshoppers.viewmodels.UserViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun RaceConditions(navController: NavController, userMail: String, friendEmail: String) {
+fun Race(navController: NavController, userMail: String, friendEmail: String) {
 
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
@@ -205,7 +206,7 @@ fun RaceConditions(navController: NavController, userMail: String, friendEmail: 
 
                     ) {
                         Text(
-                            text = "Race Conditions",
+                            text = "Race",
                             color = Color.White
                         )
                     }
@@ -218,45 +219,15 @@ fun RaceConditions(navController: NavController, userMail: String, friendEmail: 
                                 Color(0xffe9dbc0),
                                 shape = RoundedCornerShape(16.dp)
                             ), // Background and rounded corners
-                        verticalArrangement = Arrangement.spacedBy(16.dp), // Adds space between buttons
+                        verticalArrangement = Arrangement.spacedBy(8.dp), // Adds space between buttons
                         horizontalAlignment = Alignment.CenterHorizontally // Centers the buttons horizontally
                     ) {
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-
-                        Text(
-                            text = "Note:",
-                            color = Color(0xff4b2f1b),
-                            modifier = Modifier.padding(start = 5.dp, end = 300.dp),
-                            fontSize = 12.sp,
-                            )
-
-                        Text(
-                            text = "If you want a fair race, make sure you and the person you invited" +
-                                    " are both at the same location.",
-                            color = Color(0xff4b2f1b),
-                            modifier = Modifier.padding(start = 10.dp).offset(y = (-10).dp),
-                            fontSize = 18.sp
-                            )
-
-                        Button(
-                            onClick = {},
-                            modifier = Modifier
-                                .size(275.dp, 50.dp)
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xff4b2f1b)
-                            )
-                        ) {
-                            Text("Select finish line")
-                        }
-
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly, // Space images evenly
                             verticalAlignment = Alignment.CenterVertically // Align images vertically in the center
                         ) {
@@ -272,6 +243,7 @@ fun RaceConditions(navController: NavController, userMail: String, friendEmail: 
                                         .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
                                 )
                                 Text(text = "${currUser?.username}", fontSize = 12.sp, color = Color.Black) // First text
+                                Text(text = "Currently Losing!", fontSize = 12.sp, color = Color.Red) // First text
                             }
 
                             // Second image: "vs"
@@ -293,44 +265,72 @@ fun RaceConditions(navController: NavController, userMail: String, friendEmail: 
                                         .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
                                 )
                                 Text(text = "${friend?.username}", fontSize = 12.sp, color = Color.Black) // First text
+                                Text(text = "Currently Winning!", fontSize = 12.sp, color = Color.Green) // First text
                             }
                         }
 
-                        Button(
-                            onClick = {
-                                navController.navigate(
-                                    Screens.Friends.route
-                                        .replace(
-                                            oldValue = "{email}",
-                                            newValue = userMail
-                                        )
-                                        .replace(
-                                            oldValue = "{acceptedRequest}",
-                                            newValue = "false"
-                                        )
-                                )
-                            },
+                        Text(
+                            text = "Finish Line:",
+                            color = Color(0xff4b2f1b),
+                            fontSize = 18.sp
+                        )
+
+                        Box(
                             modifier = Modifier
-                                .size(275.dp, 35.dp)
-                                .fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xffe22134)
-                            )
+                                .size(200.dp)  // Adjust size of the square
+                                .padding(start = 16.dp, end = 16.dp)
+                                .background(Color(0xFFBB9753), shape = RoundedCornerShape(16.dp)),
+                            contentAlignment = Alignment.Center  // Centers the text inside the square
                         ) {
-                            Text("Cancel Race")
+                            Text(
+                                text = "Map with Finish Line",
+                                color = Color.White,  // Text color
+                            )
                         }
 
-                        Button(
-                            onClick = {navController.navigate("race_screen/${userMail}/${friendEmail}")},
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        Row(
                             modifier = Modifier
-                                .size(275.dp, 50.dp)
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xff44ba3c)
-                            )
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center, // Adds space between the buttons
+                            verticalAlignment = Alignment.CenterVertically // Aligns buttons vertically
                         ) {
-                            Text("Start race against ${friend?.username}")
+                            // First button (Cancel Race)
+                            Button(
+                                onClick = {
+                                    navController.navigate(
+                                        Screens.Friends.route
+                                            .replace(oldValue = "{email}", newValue = userMail)
+                                            .replace(oldValue = "{acceptedRequest}", newValue = "false")
+                                    )
+                                },
+                                modifier = Modifier
+                                    .size(135.dp, 35.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xffe22134))
+                            ) {
+                                Text("Cancel Race")
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            // Second button (Another similar button, you can customize the text or action)
+                            Button(
+                                onClick = {
+                                    navController.navigate(
+                                        Screens.HomeScreen.route
+                                            .replace(
+                                                oldValue = "{email}",
+                                                newValue = userMail.toString()
+                                            )
+                                    )
+                                },
+                                modifier = Modifier
+                                    .size(135.dp, 35.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b))
+                            ) {
+                                Text("Map")
+                            }
                         }
                     }
                 }

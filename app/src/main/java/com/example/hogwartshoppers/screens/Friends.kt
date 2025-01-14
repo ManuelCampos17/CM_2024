@@ -68,6 +68,7 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.User
+import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -76,6 +77,7 @@ import kotlinx.coroutines.launch
 fun FriendsScreen(navController: NavController, userMail: String, acceptedRequest: Boolean) {
 
     val userViewModel: UserViewModel = viewModel()
+    val broomViewModel: BroomViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
     var friendsEmails by remember { mutableStateOf<List<String>?>(null) }
     var friendRequests by remember { mutableStateOf<List<String>?>(null) }
@@ -390,7 +392,12 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                     if (showDialog) {
                         AlertDialog(
                             onDismissRequest = { showDialog = false }, // Dismiss on outside touch
-                            title = { Text("Enter Friend's Email") },
+                            title = {
+                                Text(
+                                    text = "Enter Friend's Email",
+                                    color = Color.White // Title text color
+                                )
+                            },
                             text = {
                                 Column {
                                     OutlinedTextField(
@@ -398,7 +405,8 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                                         onValueChange = { emailInput = it },
                                         label = { Text("Friend's Email") },
                                         isError = emailInput.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(emailInput).matches(),
-                                        singleLine = true
+                                        singleLine = true,
+                                        textStyle = TextStyle(color = Color.White)
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
@@ -438,18 +446,27 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                                             if(emailInput == userMail)
                                                 resultMessage = "You can't add yourself as a friend!"
                                             else
-                                            resultMessage = "Please enter a valid email address"
+                                                resultMessage = "Please enter a valid email address"
                                         }
-                                    }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xffBB9753) // Button background color
+                                    )
                                 ) {
-                                    Text("Send Request")
+                                    Text("Send Request", color = Color.White) // Button text color
                                 }
                             },
                             dismissButton = {
-                                Button(onClick = { showDialog = false }) {
-                                    Text("Cancel")
+                                Button(onClick = { showDialog = false },
+                                        colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xffBB9753) // Button background color
+                                        )
+                                ){
+                                    Text("Cancel", color = Color.White) // Button text color
                                 }
-                            }
+                            },
+                            shape = RoundedCornerShape(16.dp), // Rounded corners
+                            containerColor = Color(0xff4b2f1b)
                         )
                     }
                 }
@@ -459,7 +476,7 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
 }
 
 @Composable
-fun FriendBox(userEmail: String,email: String, navController: NavController) {
+fun FriendBox(userEmail: String,email: String, navController: NavController, broomViewModel: BroomViewModel = viewModel()) {
     val userViewModel: UserViewModel = viewModel()
     var friend by remember { mutableStateOf<User?>(null) }
 
@@ -471,6 +488,9 @@ fun FriendBox(userEmail: String,email: String, navController: NavController) {
     }
 
     friend?.let { f ->
+
+        var isFriendRiding by remember { mutableStateOf(true) }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -543,7 +563,15 @@ fun FriendBox(userEmail: String,email: String, navController: NavController) {
                     // Button for "Challenge for Race"
                     Button(
                         onClick = {
-                            navController.navigate("race_conditions_screen/${userEmail}/${f.email}")
+                            broomViewModel.isUserRiding(f.email) { success ->
+                                if (success) {
+                                    navController.navigate("race_conditions_screen/${userEmail}/${f.email}")
+                                }
+                                else {
+                                  //isFriendRiding = false
+                                    navController.navigate("race_conditions_screen/${userEmail}/${f.email}") // temp
+                                }
+                            }
                         },
                         modifier = Modifier.weight(1f), // Take equal space on each side of the Row
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
@@ -551,6 +579,13 @@ fun FriendBox(userEmail: String,email: String, navController: NavController) {
                     ) {
                         Text(text = "Race Friend", color = Color.White)
                     }
+                }
+                if(!isFriendRiding) {
+                    Text(
+                        text = "You can't race a friend that isn't riding a broom!",
+                        color = Color.Red, // Red text color
+                        fontSize = 12.sp // Smaller font size (you can adjust the value as needed)
+                    )
                 }
             }
         }
