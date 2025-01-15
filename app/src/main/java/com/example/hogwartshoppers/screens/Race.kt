@@ -222,7 +222,7 @@ fun Race(navController: NavController, userMail: String, friendEmail: String) {
                         verticalArrangement = Arrangement.spacedBy(8.dp), // Adds space between buttons
                         horizontalAlignment = Alignment.CenterHorizontally // Centers the buttons horizontally
                     ) {
-                        if(false) {
+                        if(true) {
                             Spacer(modifier = Modifier.height(14.dp))
 
                             Row(

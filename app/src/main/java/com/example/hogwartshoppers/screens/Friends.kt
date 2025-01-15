@@ -651,7 +651,7 @@ fun FriendRequestItem(
                     Button(
                         onClick = {
                             // Navigate to their profile screen
-                            navController.navigate("profile/${friend.email}")
+                            navController.navigate("profile_screen/${friend.email}")
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),

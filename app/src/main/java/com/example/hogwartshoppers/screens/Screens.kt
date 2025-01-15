@@ -9,7 +9,7 @@ sealed class Screens (val route: String) {
     object TripHistory: Screens("trip_history_screen/{email}")
     object CustomizeBroom : Screens("customize_broom_screen")
     object SpecialPerk : Screens("special_perk_screen")
-    object Forum : Screens("forum_screen")
+    object Forum : Screens("forum_screen/{email}")
     object Friends : Screens("friends_screen/{email}/{acceptedRequest}")
     object Settings : Screens("settings_screen/{email}")
     object Payment : Screens("payment_screen")

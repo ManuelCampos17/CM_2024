@@ -55,50 +55,67 @@ class ForumViewModel: ViewModel() {
         }
     }
 
-    // funcao para criar uma reply
-    fun createReply(userEmail: String, title: String, text: String) {
-        repliesRef.get().addOnSuccessListener { snapshot ->
-            // Create a new user entry
-            val reply = Replies(
-                userEmail = userEmail,
-                title = title,
-                text = text
-            )
-            repliesRef.push().setValue(reply)
-        }
-    }
-
-    // funcao para dar get das replies de um title
-    fun getReplies(title: String, callback: (List<Replies>?) -> Unit) {
-        repliesRef.get().addOnSuccessListener { snapshot ->
-            val repliesList = mutableListOf<Replies>()
-            for (allReplies in snapshot.children) {
-                val reply = Replies(
-                    userEmail = allReplies.child("userEmail").value as? String ?: "",
-                    title = allReplies.child("title").value as? String ?: "",
-                    text = allReplies.child("text").value as? String ?: ""
+    fun getPostsByUser(userEmail: String, callback: (List<Posts>?) -> Unit) {
+        postsRef.get().addOnSuccessListener { snapshot ->
+            val postsList = mutableListOf<Posts>()
+            for (allPosts in snapshot.children) {
+                val post = Posts(
+                    userEmail = allPosts.child("userEmail").value as? String ?: "",
+                    title = allPosts.child("title").value as? String ?: "",
+                    text = allPosts.child("text").value as? String ?: ""
                 )
-                if (reply.title == title) {
-                    repliesList.add(reply)
+                if (post.userEmail == userEmail) {
+                    postsList.add(post)
                 }
             }
-            callback(repliesList)
+            callback(postsList)
         }
-    }
 
-    // funcao para dar retrieve de TODAS as replies
-    fun getAllReplies(callback: (List<Replies>?) -> Unit) {
-        repliesRef.get().addOnSuccessListener { snapshot ->
-            val repliesList = mutableListOf<Replies>()
-            for (allReplies in snapshot.children) {
+        // funcao para criar uma reply
+        fun createReply(userEmail: String, title: String, text: String) {
+            repliesRef.get().addOnSuccessListener { snapshot ->
+                // Create a new user entry
                 val reply = Replies(
-                    userEmail = allReplies.child("userEmail").value as? String ?: "",
-                    title = allReplies.child("title").value as? String ?: "",
-                    text = allReplies.child("text").value as? String ?: ""
+                    userEmail = userEmail,
+                    title = title,
+                    text = text
                 )
-                repliesList.add(reply)
+                repliesRef.push().setValue(reply)
             }
-            callback(repliesList)
+        }
+
+        // funcao para dar get das replies de um title
+        fun getReplies(title: String, callback: (List<Replies>?) -> Unit) {
+            repliesRef.get().addOnSuccessListener { snapshot ->
+                val repliesList = mutableListOf<Replies>()
+                for (allReplies in snapshot.children) {
+                    val reply = Replies(
+                        userEmail = allReplies.child("userEmail").value as? String ?: "",
+                        title = allReplies.child("title").value as? String ?: "",
+                        text = allReplies.child("text").value as? String ?: ""
+                    )
+                    if (reply.title == title) {
+                        repliesList.add(reply)
+                    }
+                }
+                callback(repliesList)
+            }
+        }
+
+        // funcao para dar retrieve de TODAS as replies
+        fun getAllReplies(callback: (List<Replies>?) -> Unit) {
+            repliesRef.get().addOnSuccessListener { snapshot ->
+                val repliesList = mutableListOf<Replies>()
+                for (allReplies in snapshot.children) {
+                    val reply = Replies(
+                        userEmail = allReplies.child("userEmail").value as? String ?: "",
+                        title = allReplies.child("title").value as? String ?: "",
+                        text = allReplies.child("text").value as? String ?: ""
+                    )
+                    repliesList.add(reply)
+                }
+                callback(repliesList)
+            }
         }
     }
 }

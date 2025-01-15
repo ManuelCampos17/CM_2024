@@ -64,5 +64,10 @@ fun NavGraph(navController: NavHostController) {
             val friendEmail: String = navBackStack.arguments?.getString("friendEmail").toString()
             Race(navController = navController, userMail = email, friendEmail = friendEmail)
         }
+
+        composable(route = Screens.Forum.route + "?email={email}"){ navBackStack ->
+            val email: String = navBackStack.arguments?.getString("email").toString()
+            ForumScreen(navController = navController, userMail = email)
+        }
     }
 }

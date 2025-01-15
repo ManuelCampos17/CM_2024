@@ -1,6 +1,7 @@
 package com.example.hogwartshoppers
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -67,6 +69,10 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Set the status bar color to the default background color
+        window.statusBarColor = ContextCompat.getColor(this, R.color.default_background)
+
         enableEdgeToEdge()
         setContent {
             HogwartsHoppersTheme {
@@ -76,6 +82,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun Login(navController: NavController) {
     val userViewModel: UserViewModel = viewModel()
