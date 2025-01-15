@@ -53,48 +53,89 @@ class BroomViewModel: ViewModel() {
         }
     }
 
-
-    fun updateBroom(broom: Broom){
-        val broomRef = broomsRef.child(broom.name)
-        broomRef.setValue(broom)
-    }
-
     // function to update the distance of a broom
     // Updates distance
     fun updateDistanceBroom(distance: Double, name: String) {
-        val broomRef = broomsRef.child(name)
-        // Get the current distance from the database
-        broomRef.child("distance").get().addOnSuccessListener { snapshot ->
-            val currentDistance = convertToDouble(snapshot.value)
-
-            // Calculate the new distance by summing the old and new distances
-            val newDistance = currentDistance + distance
-
-            // Update the database with the new distance
-            broomRef.child("distance").setValue(newDistance)
-        }
+        broomsRef.orderByChild("Name").equalTo(name)
+            .limitToFirst(1) // Stops once it finds the first match
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.exists()) {
+                    val broomKey = snapshot.children.first().key
+                    val currentDistance = convertToDouble(snapshot.child("distance").value)
+                    // Calculate the new distance by summing the old and new distances
+                    val newDistance = currentDistance + distance
+                    broomKey?.let {
+                        broomsRef.child(it).child("distance").setValue(newDistance)
+                    }
+                } else {
+                    Log.e("Firebase", "Broom with name $name not found.")
+                }
+            }
+            .addOnFailureListener { error ->
+                Log.e("Firebase", "Error updating distance: ${error.message}")
+            }
     }
 
     // funcao para verificar se uma broom está available
     fun checkAvailable(name: String, callback: (Boolean) -> Unit) {
         val broomRef = broomsRef.child(name)
-        broomRef.child("available").get().addOnSuccessListener { snapshot ->
-            val available = snapshot.value as Boolean
-            callback(available)
-        }
+        broomsRef.orderByChild("Name").equalTo(name)
+            .limitToFirst(1) // Stops once it finds the first match
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.exists()) {
+                    val available = snapshot.child("available").value as Boolean
+                    callback(available)
+                } else {
+                    Log.e("Firebase", "Broom with name $name not found.")
+                }
+            }
+            .addOnFailureListener { error ->
+                Log.e("Firebase", "Error checking availability: ${error.message}")
+            }
     }
 
     // funcao para atualizar a disponibilidade de uma broom
-    fun updateAvailable(name: String, available: Boolean) {
-        val broomRef = broomsRef.child(name)
-        broomRef.child("available").setValue(available)
+    fun updateAvailable(broomName: String, available: Boolean) {
+        broomsRef.orderByChild("Name").equalTo(broomName)
+            .limitToFirst(1) // Stops once it finds the first match
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.exists()) {
+                    val broomKey = snapshot.children.first().key
+                    broomKey?.let {
+                        broomsRef.child(it).child("Available").setValue(available)
+                    }
+                } else {
+                    Log.e("Firebase", "Broom with name $broomName not found.")
+                }
+            }
+            .addOnFailureListener { error ->
+                Log.e("Firebase", "Error updating availability: ${error.message}")
+            }
     }
+
 
     // funcao para atualizar o local onde uma broom está
     fun updateLocation(name: String, latitude: Double, longitude: Double) {
-        val broomRef = broomsRef.child(name)
-        broomRef.child("latitude").setValue(latitude)
-        broomRef.child("longitude").setValue(longitude)
+        broomsRef.orderByChild("Name").equalTo(name)
+            .limitToFirst(1) // Stops once it finds the first match
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.exists()) {
+                    val broomKey = snapshot.children.first().key
+                    broomKey?.let {
+                        broomsRef.child(it).child("latitude").setValue(latitude)
+                        broomsRef.child(it).child("longitude").setValue(longitude)
+                    }
+                } else {
+                    Log.e("Firebase", "Broom with name $name not found.")
+                }
+            }
+            .addOnFailureListener { error ->
+                Log.e("Firebase", "Error updating availability: ${error.message}")
+            }
     }
 
     // comecar uma viagem
