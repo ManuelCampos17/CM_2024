@@ -54,8 +54,8 @@ class BroomViewModel: ViewModel() {
     }
 
     // function to get info of the broom
-    fun getBroom(name: String, callback: (Broom?) -> Unit) {
-        broomsRef.orderByChild("Name").equalTo(name)
+    fun getBroom(broomName: String, callback: (Broom?) -> Unit) {
+        broomsRef.orderByChild("Name").equalTo(broomName)
             .limitToFirst(1) // Limit to the first matching broom
             .get()
             .addOnSuccessListener { snapshot ->
