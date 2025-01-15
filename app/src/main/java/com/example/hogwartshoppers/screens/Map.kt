@@ -75,7 +75,9 @@ import com.google.maps.android.compose.MarkerState
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.example.hogwartshoppers.R
+import com.example.hogwartshoppers.model.Broom
 import com.example.hogwartshoppers.model.User
+import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -108,7 +110,7 @@ fun MapScreen(navController: NavController, userMail: String) {
 
     // State to store user's location
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
-    var selectedMarker by remember { mutableStateOf<LatLng?>(null) }
+    var selectedMarker by remember { mutableStateOf<Broom?>(null) }
 
     // Check and request location permissions
     LaunchedEffect(Unit) {
@@ -289,9 +291,10 @@ fun MapScreen(navController: NavController, userMail: String) {
                 if (userLocation != null) {
                     ShowGoogleMap(
                         userLocation = userLocation!!,
-                        onMarkerClick = { marker ->
-                            selectedMarker = marker
-                        }
+                        onMarkerClick = { broom ->
+                            selectedMarker = broom
+                        },
+                        broomVm = BroomViewModel()
                     )
                 }
 
@@ -357,7 +360,7 @@ fun MapScreen(navController: NavController, userMail: String) {
                 }
 
                 // Overlay content for the selected marker
-                selectedMarker?.let { marker ->
+                selectedMarker?.let { broom ->
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -391,7 +394,7 @@ fun MapScreen(navController: NavController, userMail: String) {
                         ) {
                             // Broom details
                             Text(
-                                text = "Nimbus 2000",
+                                text = broom.name,
                                 color = Color.White,
                                 fontSize = 28.sp,
                                 modifier = Modifier
@@ -441,7 +444,7 @@ fun MapScreen(navController: NavController, userMail: String) {
                                         )
 
                                         Text(
-                                            text = "0.20 Galleon/Minute",
+                                            text = broom.price.toString() + " Galleon/Minute",
                                             color = Color.White,
                                             fontSize = 18.sp,
                                             modifier = Modifier.align(Alignment.CenterVertically)
@@ -461,7 +464,7 @@ fun MapScreen(navController: NavController, userMail: String) {
                                         )
 
                                         Text(
-                                            text = "2560 km",
+                                            text = broom.distance.toString() + " km",
                                             color = Color.White,
                                             fontSize = 18.sp,
                                             modifier = Modifier.align(Alignment.CenterVertically)
@@ -510,23 +513,13 @@ fun getScaledMarkerIcon(context: Context, drawableId: Int, width: Int, height: I
 }
 
 @Composable
-fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (LatLng) -> Unit) {
+fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm: BroomViewModel) {
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(userLocation, 17f)
     }
 
     // Define marker locations close to the user's location
-    val markerLocations = remember {
-        mutableStateOf(
-            listOf(
-                LatLng(userLocation.latitude + 0.001, userLocation.longitude), // North
-                LatLng(userLocation.latitude - 0.001, userLocation.longitude), // South
-                LatLng(userLocation.latitude, userLocation.longitude + 0.001), // East
-                LatLng(userLocation.latitude, userLocation.longitude - 0.001), // West
-                LatLng(userLocation.latitude + 0.0007, userLocation.longitude + 0.0007) // Northeast
-            )
-        )
-    }
+    val markerLocations = remember { mutableStateOf(listOf<Broom>()) }
 
     val context = LocalContext.current
 
@@ -556,22 +549,25 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (LatLng) -> Unit) {
             }
 
             LaunchedEffect(userLocation) {
-                markerLocations.value = listOf(
-                    LatLng(userLocation.latitude + 0.001, userLocation.longitude), // North
-                    LatLng(userLocation.latitude - 0.001, userLocation.longitude), // South
-                    LatLng(userLocation.latitude, userLocation.longitude + 0.001), // East
-                    LatLng(userLocation.latitude, userLocation.longitude - 0.001), // West
-                    LatLng(userLocation.latitude + 0.0007, userLocation.longitude + 0.0007) // Northeast
-                )
+                broomVm.getBrooms { broomList ->
+                    if (broomList != null) {
+                        // Update markerLocations with LatLng for each broom
+                        markerLocations.value = broomList.map { broom ->
+                            broom
+                        }
+                    } else {
+                        println("No brooms found or an error occurred.")
+                    }
+                }
             }
 
-            markerLocations.value.forEach { location ->
+            markerLocations.value.forEach { broom ->
                 Marker(
-                    state = MarkerState(position = location),
+                    state = MarkerState(position = LatLng(broom.latitude, broom.longitude)),
                     icon = customIcon,
                     title = "Custom Marker",
                     onClick = {
-                        onMarkerClick(location)
+                        onMarkerClick(broom)
                         true // Consume click
                     }
                 )
