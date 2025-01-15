@@ -145,7 +145,6 @@ class BroomViewModel: ViewModel() {
             }
     }
 
-
     // funcao para atualizar o local onde uma broom está
     fun updateLocation(name: String, latitude: Double, longitude: Double) {
         broomsRef.orderByChild("Name").equalTo(name)
@@ -246,6 +245,37 @@ class BroomViewModel: ViewModel() {
             .addOnFailureListener { exception ->
                 callback(false)  // Handle failure by returning false
                 Log.e("FirebaseError", "Error getting last rental ID", exception)
+            }
+    }
+
+    // funcao para atualizar preço da trip
+    fun updateTripPrice(userEmail: String, newPrice: Double, callback: (Boolean) -> Unit) {
+        val userKey = userEmail.replace(".", "|") // Convert email to valid database key
+        tripsRef.child(userKey)
+            .orderByKey()
+            .limitToLast(1) // Fetch the most recent trip
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val lastId = snapshot.children.firstOrNull()?.key
+                if (lastId != null) {
+                    // Reference to the last trip
+                    val tripRef = tripsRef.child(userKey).child(lastId)
+                    // Update the price field
+                    tripRef.child("price").setValue(newPrice)
+                        .addOnSuccessListener {
+                            callback(true) // Successfully updated
+                        }
+                        .addOnFailureListener {
+                            callback(false) // Update failed
+                        }
+                } else {
+                    // No trips found
+                    callback(false)
+                }
+            }
+            .addOnFailureListener {
+                // Failed to retrieve the trips
+                callback(false)
             }
     }
 
