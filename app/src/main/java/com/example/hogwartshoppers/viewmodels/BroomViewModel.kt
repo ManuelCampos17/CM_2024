@@ -1,6 +1,7 @@
 package com.example.hogwartshoppers.viewmodels
 
 import android.util.Log
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -81,8 +82,6 @@ class BroomViewModel: ViewModel() {
             }
     }
 
-
-
     // function to update the distance of a broom
     // Updates distance
     fun updateDistanceBroom(distance: Double, name: String) {
@@ -109,13 +108,13 @@ class BroomViewModel: ViewModel() {
 
     // funcao para verificar se uma broom está available
     fun checkAvailable(name: String, callback: (Boolean) -> Unit) {
-        val broomRef = broomsRef.child(name)
         broomsRef.orderByChild("Name").equalTo(name)
             .limitToFirst(1) // Stops once it finds the first match
             .get()
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
-                    val available = snapshot.child("Available").value as Boolean
+                    val broomSnapshot = snapshot.children.first()
+                    val available = broomSnapshot.child("Available").value as Boolean
                     callback(available)
                 } else {
                     Log.e("Firebase", "Broom with name $name not found.")

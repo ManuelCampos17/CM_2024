@@ -476,13 +476,21 @@ fun MapScreen(navController: NavController, userMail: String) {
                             // Accio Broom button
                             Button(
                                 onClick = {
+                                    val selectedBroom = selectedMarker
                                     selectedMarker = null // Dismiss overlay on button click
-                                    navController.navigate(Screens.BroomDetails.route
-                                        .replace(
-                                            oldValue = "{email}",
-                                            newValue = currUser?.email.toString()
+
+                                    if (selectedBroom != null) {
+                                        navController.navigate(Screens.BroomDetails.route
+                                            .replace(
+                                                oldValue = "{email}",
+                                                newValue = currUser?.email.toString()
+                                            )
+                                            .replace(
+                                                oldValue = "{broom}",
+                                                newValue = selectedBroom.name
+                                            )
                                         )
-                                    )
+                                    }
                                 },
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
@@ -562,15 +570,17 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm:
             }
 
             markerLocations.value.forEach { broom ->
-                Marker(
-                    state = MarkerState(position = LatLng(broom.latitude, broom.longitude)),
-                    icon = customIcon,
-                    title = "Custom Marker",
-                    onClick = {
-                        onMarkerClick(broom)
-                        true // Consume click
-                    }
-                )
+                if (broom.available) {
+                    Marker(
+                        state = MarkerState(position = LatLng(broom.latitude, broom.longitude)),
+                        icon = customIcon,
+                        title = "Custom Marker",
+                        onClick = {
+                            onMarkerClick(broom)
+                            true
+                        }
+                    )
+                }
             }
         }
 

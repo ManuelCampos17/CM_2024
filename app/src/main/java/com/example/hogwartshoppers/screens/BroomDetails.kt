@@ -1,5 +1,7 @@
 package com.example.hogwartshoppers.screens
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,9 +19,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -28,14 +29,30 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.R
+import com.example.hogwartshoppers.model.Broom
 import com.example.hogwartshoppers.model.User
+import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 @Composable
-fun BroomDetailsScreen(navController: NavController, userMail: String) {
+fun BroomDetailsScreen(navController: NavController, userMail: String, selectedBroomName: String) {
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
+    val viewModel = BroomViewModel()
+
+    var selectedBroom by remember { mutableStateOf<Broom?>(null) }
+
+    viewModel.getBroom(selectedBroomName) { broom ->
+        if (broom != null) {
+            selectedBroom = broom
+
+            println("Broom retrieved: ${broom.name}")
+        } else {
+            println("Broom not found!")
+        }
+    }
 
     LaunchedEffect(userMail) {
         userViewModel.getUserInfo(userMail) { user ->
@@ -174,19 +191,21 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     ) {
                         DetailItem(
-                            label = "Nimbus 2000",
+                            label = selectedBroomName,
                             imageRes = R.drawable.broom_details,
                             imageSize = 100.dp,
                             fontSize = 18.sp,
                             textWidth = 140.dp
                         )
-                        DetailItem(
-                            label = "Super Fast",
-                            imageRes = R.drawable.speed_details,
-                            imageSize = 100.dp,
-                            fontSize = 18.sp,
-                            textWidth = 140.dp
-                        )
+                        selectedBroom?.let {
+                            DetailItem(
+                                label = it.category,
+                                imageRes = R.drawable.speed_details,
+                                imageSize = 100.dp,
+                                fontSize = 18.sp,
+                                textWidth = 140.dp
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -196,14 +215,14 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     ) {
                         DetailItem(
-                            label = "2560 km",
+                            label = selectedBroom?.distance.toString() + " km",
                             imageRes = R.drawable.km_details,
                             imageSize = 100.dp,
                             fontSize = 18.sp,
                             textWidth = 140.dp
                         )
                         DetailItem(
-                            label = "0.20 Gal/Min",
+                            label = selectedBroom?.price.toString() + " Gal/Min",
                             imageRes = R.drawable.money_details,
                             imageSize = 100.dp,
                             fontSize = 18.sp,
@@ -224,8 +243,10 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    val context = LocalContext.current
+
                     Button(
-                        onClick = {},
+                        onClick = { selectedBroom?.let { rentBroom(navController, userMail, it, viewModel, context) } },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBB9753)),
                         modifier = Modifier.padding(8.dp)
                     ) {
@@ -233,6 +254,37 @@ fun BroomDetailsScreen(navController: NavController, userMail: String) {
                     }
                 }
             }
+        }
+    }
+}
+
+fun rentBroom(controller: NavController, email: String, broom: Broom, viewModel: BroomViewModel, context: Context) {
+    viewModel.checkAvailable(broom.name) { res ->
+        if (res) {
+            viewModel.startTrip(email, broom.name)
+
+            controller.navigate(Screens.HomeScreen.route
+                .replace(
+                    oldValue = "{email}",
+                    newValue = email
+                )
+            )
+        }
+        else {
+            MaterialAlertDialogBuilder(context)
+                .setTitle("Unable to Start Trip")
+                .setMessage("This broom was already rented.")
+                .setPositiveButton("OK") { dialog, _ ->
+                    dialog.dismiss()
+
+                    controller.navigate(Screens.HomeScreen.route
+                        .replace(
+                            oldValue = "{email}",
+                            newValue = email
+                        )
+                    )
+                }
+                .show()
         }
     }
 }

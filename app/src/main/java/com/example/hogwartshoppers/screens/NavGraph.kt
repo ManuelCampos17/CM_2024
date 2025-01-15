@@ -31,9 +31,10 @@ fun NavGraph(navController: NavHostController) {
             SettingsScreen(navController = navController, userMail = email)
         }
 
-        composable(route = Screens.BroomDetails.route + "?email={email}"){ navBackStack ->
+        composable(route = Screens.BroomDetails.route + "?email={email}" + "&broom={broom}"){ navBackStack ->
             val email: String = navBackStack.arguments?.getString("email").toString()
-            BroomDetailsScreen(navController = navController, userMail = email)
+            val broom: String = navBackStack.arguments?.getString("broom").toString()
+            BroomDetailsScreen(navController = navController, userMail = email, selectedBroomName = broom)
         }
 
         composable(route = Screens.Profile.route + "?email={email}"){ navBackStack ->

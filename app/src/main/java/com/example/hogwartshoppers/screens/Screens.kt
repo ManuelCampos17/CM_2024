@@ -5,7 +5,7 @@ sealed class Screens (val route: String) {
     object Login : Screens("login_screen")
     object Register : Screens("register_screen")
     object Profile : Screens("profile_screen/{email}")
-    object BroomDetails : Screens("broom_details_screen/{email}")
+    object BroomDetails : Screens("broom_details_screen/{email}/{broom}")
     object TripHistory: Screens("trip_history_screen/{email}")
     object CustomizeBroom : Screens("customize_broom_screen")
     object SpecialPerk : Screens("special_perk_screen")
