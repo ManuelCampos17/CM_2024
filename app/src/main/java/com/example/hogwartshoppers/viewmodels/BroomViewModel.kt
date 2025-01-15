@@ -39,13 +39,13 @@ class BroomViewModel: ViewModel() {
             val broomList = mutableListOf<Broom>()
             for (allBrooms in snapshot.children) {
                 val broom = Broom(
-                    name = allBrooms.child("name").value as String,
-                    category = allBrooms.child("category").value as String,
-                    distance = (allBrooms.child("distance").value as Long).toDouble(),
-                    price = convertToDouble(allBrooms.child("price").value),
-                    latitude = convertToDouble(allBrooms.child("latitude").value),
-                    longitude = convertToDouble(allBrooms.child("longitude").value),
-                    available = allBrooms.child("available").value as Boolean
+                    name = allBrooms.child("Name").value as String,
+                    category = allBrooms.child("Category").value as String,
+                    distance = (allBrooms.child("Distance").value as Long).toDouble(),
+                    price = convertToDouble(allBrooms.child("Price").value),
+                    latitude = convertToDouble(allBrooms.child("Latitude").value),
+                    longitude = convertToDouble(allBrooms.child("Longitude").value),
+                    available = allBrooms.child("Available").value as Boolean
                 )
                 broomList.add(broom)
             }
@@ -62,11 +62,11 @@ class BroomViewModel: ViewModel() {
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
                     val broomKey = snapshot.children.first().key
-                    val currentDistance = convertToDouble(snapshot.child("distance").value)
+                    val currentDistance = convertToDouble(snapshot.child("Distance").value)
                     // Calculate the new distance by summing the old and new distances
                     val newDistance = currentDistance + distance
                     broomKey?.let {
-                        broomsRef.child(it).child("distance").setValue(newDistance)
+                        broomsRef.child(it).child("Distance").setValue(newDistance)
                     }
                 } else {
                     Log.e("Firebase", "Broom with name $name not found.")
@@ -85,7 +85,7 @@ class BroomViewModel: ViewModel() {
             .get()
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
-                    val available = snapshot.child("available").value as Boolean
+                    val available = snapshot.child("Available").value as Boolean
                     callback(available)
                 } else {
                     Log.e("Firebase", "Broom with name $name not found.")
@@ -126,8 +126,8 @@ class BroomViewModel: ViewModel() {
                 if (snapshot.exists()) {
                     val broomKey = snapshot.children.first().key
                     broomKey?.let {
-                        broomsRef.child(it).child("latitude").setValue(latitude)
-                        broomsRef.child(it).child("longitude").setValue(longitude)
+                        broomsRef.child(it).child("Latitude").setValue(latitude)
+                        broomsRef.child(it).child("Longitude").setValue(longitude)
                     }
                 } else {
                     Log.e("Firebase", "Broom with name $name not found.")
