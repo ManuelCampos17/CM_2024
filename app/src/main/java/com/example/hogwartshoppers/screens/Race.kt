@@ -222,115 +222,123 @@ fun Race(navController: NavController, userMail: String, friendEmail: String) {
                         verticalArrangement = Arrangement.spacedBy(8.dp), // Adds space between buttons
                         horizontalAlignment = Alignment.CenterHorizontally // Centers the buttons horizontally
                     ) {
+                        if(false) {
+                            Spacer(modifier = Modifier.height(14.dp))
 
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly, // Space images evenly
-                            verticalAlignment = Alignment.CenterVertically // Align images vertically in the center
-                        ) {
-                            // First Image with texts below
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly, // Space images evenly
+                                verticalAlignment = Alignment.CenterVertically // Align images vertically in the center
                             ) {
+                                // First Image with texts below
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
+                                        contentDescription = "Default Ahh",
+                                        modifier = Modifier.size(100.dp)
+                                            .clip(CircleShape) // Make the image circular
+                                            .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
+                                    )
+                                    Text(text = "${currUser?.username}", fontSize = 12.sp, color = Color.Black) // First text
+                                    Text(text = "Currently Losing!", fontSize = 12.sp, color = Color.Red) // First text
+                                }
+
+                                // Second image: "vs"
                                 Image(
-                                    painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
-                                    contentDescription = "Default Ahh",
-                                    modifier = Modifier.size(100.dp)
-                                        .clip(CircleShape) // Make the image circular
-                                        .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
+                                    painter = painterResource(id = R.drawable.vs), // Replace with your drawable resource
+                                    contentDescription = "VS",
+                                    modifier = Modifier.size(75.dp) // Adjust size as needed
                                 )
-                                Text(text = "${currUser?.username}", fontSize = 12.sp, color = Color.Black) // First text
-                                Text(text = "Currently Losing!", fontSize = 12.sp, color = Color.Red) // First text
+
+                                // Second Image with texts below
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
+                                        contentDescription = "Default Ahh",
+                                        modifier = Modifier.size(100.dp)
+                                            .clip(CircleShape) // Make the image circular
+                                            .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
+                                    )
+                                    Text(text = "${friend?.username}", fontSize = 12.sp, color = Color.Black) // First text
+                                    Text(text = "Currently Winning!", fontSize = 12.sp, color = Color.Green) // First text
+                                }
                             }
 
-                            // Second image: "vs"
-                            Image(
-                                painter = painterResource(id = R.drawable.vs), // Replace with your drawable resource
-                                contentDescription = "VS",
-                                modifier = Modifier.size(75.dp) // Adjust size as needed
-                            )
-
-                            // Second Image with texts below
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
-                                    contentDescription = "Default Ahh",
-                                    modifier = Modifier.size(100.dp)
-                                        .clip(CircleShape) // Make the image circular
-                                        .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
-                                )
-                                Text(text = "${friend?.username}", fontSize = 12.sp, color = Color.Black) // First text
-                                Text(text = "Currently Winning!", fontSize = 12.sp, color = Color.Green) // First text
-                            }
-                        }
-
-                        Text(
-                            text = "Finish Line:",
-                            color = Color(0xff4b2f1b),
-                            fontSize = 18.sp
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .size(200.dp)  // Adjust size of the square
-                                .padding(start = 16.dp, end = 16.dp)
-                                .background(Color(0xFFBB9753), shape = RoundedCornerShape(16.dp)),
-                            contentAlignment = Alignment.Center  // Centers the text inside the square
-                        ) {
                             Text(
-                                text = "Map with Finish Line",
-                                color = Color.White,  // Text color
+                                text = "Finish Line:",
+                                color = Color(0xff4b2f1b),
+                                fontSize = 18.sp
                             )
+
+                            Box(
+                                modifier = Modifier
+                                    .size(200.dp)  // Adjust size of the square
+                                    .padding(start = 16.dp, end = 16.dp)
+                                    .background(Color(0xFFBB9753), shape = RoundedCornerShape(16.dp)),
+                                contentAlignment = Alignment.Center  // Centers the text inside the square
+                            ) {
+                                Text(
+                                    text = "Map with Finish Line",
+                                    color = Color.White,  // Text color
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(5.dp))
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center, // Adds space between the buttons
+                                verticalAlignment = Alignment.CenterVertically // Aligns buttons vertically
+                            ) {
+                                // First button (Cancel Race)
+                                Button(
+                                    onClick = {
+                                        navController.navigate(
+                                            Screens.Friends.route
+                                                .replace(oldValue = "{email}", newValue = userMail)
+                                                .replace(oldValue = "{acceptedRequest}", newValue = "false")
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .size(135.dp, 35.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xffe22134))
+                                ) {
+                                    Text("Cancel Race")
+                                }
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                // Second button (Another similar button, you can customize the text or action)
+                                Button(
+                                    onClick = {
+                                        navController.navigate(
+                                            Screens.HomeScreen.route
+                                                .replace(
+                                                    oldValue = "{email}",
+                                                    newValue = userMail.toString()
+                                                )
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .size(135.dp, 35.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b))
+                                ) {
+                                    Text("Map")
+                                }
+                            }
                         }
-
-                        Spacer(modifier = Modifier.height(5.dp))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center, // Adds space between the buttons
-                            verticalAlignment = Alignment.CenterVertically // Aligns buttons vertically
-                        ) {
-                            // First button (Cancel Race)
-                            Button(
-                                onClick = {
-                                    navController.navigate(
-                                        Screens.Friends.route
-                                            .replace(oldValue = "{email}", newValue = userMail)
-                                            .replace(oldValue = "{acceptedRequest}", newValue = "false")
-                                    )
-                                },
-                                modifier = Modifier
-                                    .size(135.dp, 35.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xffe22134))
-                            ) {
-                                Text("Cancel Race")
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            // Second button (Another similar button, you can customize the text or action)
-                            Button(
-                                onClick = {
-                                    navController.navigate(
-                                        Screens.HomeScreen.route
-                                            .replace(
-                                                oldValue = "{email}",
-                                                newValue = userMail.toString()
-                                            )
-                                    )
-                                },
-                                modifier = Modifier
-                                    .size(135.dp, 35.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b))
-                            ) {
-                                Text("Map")
-                            }
+                        else {
+                            Spacer(modifier = Modifier.height(200.dp))
+                            Text(text = "You are not in a Race!",
+                                color = Color.Black,
+                                fontSize = 30.sp)
+                            Text(text = "Invite your friends to a race in your friend list!")
                         }
                     }
                 }
