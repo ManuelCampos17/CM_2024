@@ -39,6 +39,21 @@ class ForumViewModel: ViewModel() {
         }
     }
 
+    fun deletePost(userEmail: String,title: String) {
+        postsRef.get().addOnSuccessListener { snapshot ->
+            for (allPosts in snapshot.children) {
+                val post = Posts(
+                    userEmail = allPosts.child("userEmail").value as? String ?: "",
+                    title = allPosts.child("title").value as? String ?: "",
+                    text = allPosts.child("text").value as? String ?: ""
+                )
+                if (post.userEmail == userEmail && post.title == title) {
+                    allPosts.ref.removeValue()
+                }
+            }
+        }
+    }
+
     // funcao para buscar todos os posts
     fun getPosts(callback: (List<Posts>?) -> Unit) {
         postsRef.get().addOnSuccessListener { snapshot ->

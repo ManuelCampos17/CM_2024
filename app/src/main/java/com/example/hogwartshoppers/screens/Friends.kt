@@ -548,7 +548,7 @@ fun FriendBox(userEmail: String,email: String, navController: NavController, bro
                     Button(
                         onClick = {
                             // Navigate to their profile screen
-                            navController.navigate("profile/${f.email}")
+                            navController.navigate("profile_screen/${f.email}")
                         },
                         modifier = Modifier.weight(1f), // Take equal space on each side of the Row
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),

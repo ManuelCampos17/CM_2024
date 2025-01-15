@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -318,6 +319,7 @@ fun ForumScreen(navController: NavController, userMail: String) {
                                     allPosts?.let {
                                         items(it.size) { index ->
                                             PostBox(
+                                                userMail = userMail,
                                                 userEmail =it[index].userEmail,
                                                 title = it[index].title,
                                                 text = it[index].text,
@@ -345,6 +347,7 @@ fun ForumScreen(navController: NavController, userMail: String) {
                                     myPosts?.let {
                                         items(it.size) { index ->
                                             PostBox(
+                                                userMail = userMail,
                                                 userEmail =it[index].userEmail,
                                                 title = it[index].title,
                                                 text = it[index].text,
@@ -428,6 +431,7 @@ fun ForumScreen(navController: NavController, userMail: String) {
                                                 title = titleInput,
                                                 text = textInput
                                             )
+                                            Thread.sleep(400)
                                             navController.navigate(Screens.Forum.route
                                                 .replace(
                                                     oldValue = "{email}",
@@ -466,9 +470,10 @@ fun ForumScreen(navController: NavController, userMail: String) {
 }
 
 @Composable
-fun PostBox(userEmail: String,title: String,text: String, navController: NavController) {
+fun PostBox(userMail: String, userEmail: String,title: String,text: String, navController: NavController) {
 
     var userViewModel: UserViewModel = viewModel()
+    var forumViewModel: ForumViewModel = viewModel()
     var postUser by remember { mutableStateOf<User?>(null) }
 
     LaunchedEffect(userEmail) {
@@ -481,7 +486,7 @@ fun PostBox(userEmail: String,title: String,text: String, navController: NavCont
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp)
+            .heightIn(min = 150.dp)
             .padding(bottom = 12.dp)
             .background(Color.White, shape = RoundedCornerShape(16.dp))
             .padding(16.dp)
@@ -527,18 +532,50 @@ fun PostBox(userEmail: String,title: String,text: String, navController: NavCont
                 }
             }
 
-        // Button to navigate to their profile
-            Button(
-                onClick = {
-                    // Navigate to their profile screen
-                    navController.navigate("profile_screen/${postUser?.email}")
-                },
-                modifier = Modifier.weight(1f).padding(top = 24.dp), // Take equal space on each side of the Row
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
-                shape = RoundedCornerShape(16.dp)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp), // Padding around the row
+                horizontalArrangement = Arrangement.spacedBy(16.dp), // Adds space between the buttons
             ) {
-                Text(text = "View Post", color = Color.White)
+                if(postUser?.email == userMail) {
+                    Button(
+                        onClick = {
+                           forumViewModel.deletePost(userMail, title)
+                            Thread.sleep(800)
+                            navController.navigate(Screens.Forum.route
+                                .replace(
+                                    oldValue = "{email}",
+                                    newValue = userMail.toString()
+                                )
+                            )
+                        },
+                        modifier = Modifier
+                            .weight(1f) // Make the second button take up equal space
+                            .padding(top = 24.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text(text = "Delete Post", color = Color.White)
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        // Navigate to their profile screen
+                        navController.navigate("profile_screen/${postUser?.email}")
+                    },
+                    modifier = Modifier
+                        .weight(1f) // Make the button take up equal space in the row
+                        .padding(top = 24.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(text = "View Post", color = Color.White)
+                }
             }
+
         }
     }
 }
