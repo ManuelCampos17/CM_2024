@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.hogwartshoppers.model.Broom
 import androidx.lifecycle.ViewModel
@@ -11,6 +12,8 @@ import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.model.BroomTrip
 import com.google.firebase.database.FirebaseDatabase
 import java.text.SimpleDateFormat
+import java.time.LocalTime
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -217,22 +220,54 @@ class BroomViewModel: ViewModel() {
                         // Sum the current distance with the new distance
                         val newDistance = currentDistance + distance
 
-                        // Prepare the updated trip data
-                        val updatedTrip = mapOf(
-                            "active" to false,  // Mark the trip as ended
-                            "distance" to newDistance,  // Set the summed distance
-                        )
+                        // Extract the stored time (HH:mm:ss format)
+                        val timeString = tripSnapshot.child("time").value as String
+                        val timeParts = timeString.split(":")
 
-                        // Update the last trip with the new data
-                        tripRef.updateChildren(updatedTrip)
-                            .addOnSuccessListener {
-                                updateAvailable(broomName,true)
-                                callback(true)  // Trip successfully updated
+                        val storedHours = timeParts[0].toInt()
+                        val storedMinutes = timeParts[1].toInt()
+                        val storedSeconds = timeParts[2].toInt()
+
+                        // Get the current time
+                        val currentTime = Calendar.getInstance()
+                        val currentHours = currentTime.get(Calendar.HOUR_OF_DAY)
+                        val currentMinutes = currentTime.get(Calendar.MINUTE)
+                        val currentSeconds = currentTime.get(Calendar.SECOND)
+
+                        // Convert both times to minutes since the start of the day
+                        val storedTotalMinutes = storedHours * 60 + storedMinutes
+                        val storedTotalSeconds = storedTotalMinutes * 60 + storedSeconds
+
+                        val currentTotalMinutes = currentHours * 60 + currentMinutes
+                        val currentTotalSeconds = currentTotalMinutes * 60 + currentSeconds
+
+                        // Calculate the difference in seconds
+                        val elapsedSeconds = currentTotalSeconds - storedTotalSeconds
+                        val mins = elapsedSeconds / 60
+
+                        getBroom(broomName) { broom ->
+                            if (broom != null) {
+                                val price = broom.price * mins
+
+                                // Prepare the updated trip data
+                                val updatedTrip = mapOf(
+                                    "active" to false,  // Mark the trip as ended
+                                    "distance" to newDistance,  // Set the summed distance
+                                    "price" to price
+                                )
+
+                                // Update the last trip with the new data
+                                tripRef.updateChildren(updatedTrip)
+                                    .addOnSuccessListener {
+                                        updateAvailable(broomName,true)
+                                        callback(true)  // Trip successfully updated
+                                    }
+                                    .addOnFailureListener { exception ->
+                                        Log.e("FirebaseError", "Error updating trip", exception)
+                                        callback(false)  // Handle failure by returning false
+                                    }
                             }
-                            .addOnFailureListener { exception ->
-                                Log.e("FirebaseError", "Error updating trip", exception)
-                                callback(false)  // Handle failure by returning false
-                            }
+                        }
                     }
                         .addOnFailureListener { exception ->
                             Log.e("FirebaseError", "Error fetching current trip distance", exception)

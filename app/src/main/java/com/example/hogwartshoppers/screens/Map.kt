@@ -76,6 +76,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.model.Broom
+import com.example.hogwartshoppers.model.BroomTrip
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
@@ -406,7 +407,7 @@ fun MapScreen(navController: NavController, userMail: String) {
                                     .padding(top = 32.dp)
                                     .fillMaxWidth(),
 
-                            ) {
+                                ) {
                                 // Use Box to layer images
                                 Box(
                                     modifier = Modifier.size(100.dp) // Size of the Box
@@ -507,10 +508,92 @@ fun MapScreen(navController: NavController, userMail: String) {
                         }
                     }
                 }
+
+                val viewmodel = BroomViewModel()
+
+                var hasTrip by remember { mutableStateOf<Boolean?>(false) }
+                var currTrip by remember { mutableStateOf<BroomTrip?>(null) }
+
+                viewmodel.getLastTrip(userMail) { trip ->
+                    if (trip != null) {
+                        if (trip.active) {
+                            hasTrip = true
+                            currTrip = trip
+                        }
+                    }
+                }
+
+                if (hasTrip == true) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        // Background to intercept clicks
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                        )
+
+                        // Overlay content
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(16.dp)
+                                .background(
+                                    color = Color(0xFF321F12), // Brown background
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp) // Rounded corners
+                                )
+                                .padding(16.dp)
+                                .fillMaxWidth()
+                                .size(160.dp)
+                        ) {
+                            // Broom details
+                            currTrip?.let {
+                                Text(
+                                    text = it.broomName,
+                                    color = Color.White,
+                                    fontSize = 28.sp,
+                                    modifier = Modifier
+                                        .padding(bottom = 16.dp)
+                                        .align(Alignment.TopCenter)
+                                )
+                            }
+                        }
+
+                        // Accio Broom button
+                        Button(
+                            onClick = {
+                                viewmodel.endTrip(userMail, 10.0) { ret ->
+                                    if (ret) {
+                                        hasTrip = false
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .background(
+                                    color = Color(0xFFDBC7A1),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                        16.dp
+                                    )
+                                ), // Button color to match the image
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(
+                                    0xFFDBC7A1
+                                )
+                            ) // Match image color
+                        ) {
+                            Text(
+                                text = "End Trip",
+                                color = Color(0xFF321F12),
+                                fontSize = 18.sp,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
-
 }
 
 // Function to create a custom BitmapDescriptor with a specific size
