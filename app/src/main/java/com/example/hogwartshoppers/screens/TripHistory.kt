@@ -183,7 +183,7 @@ fun TripHistoryScreen(navController: NavController, userMail: String) {
 
                     ) {
                         Text(
-                            text = "Friends List",
+                            text = "Trip History",
                             color = Color.White
                         )
                     }

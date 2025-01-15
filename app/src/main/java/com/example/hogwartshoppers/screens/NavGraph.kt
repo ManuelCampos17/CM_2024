@@ -47,6 +47,11 @@ fun NavGraph(navController: NavHostController) {
             FriendsScreen(navController = navController, userMail = email, acceptedRequest = acceptedRequest)
         }
 
+        composable(route = Screens.TripHistory.route + "?email={email}"){ navBackStack ->
+            val email: String = navBackStack.arguments?.getString("email").toString()
+            TripHistoryScreen(navController = navController, userMail = email)
+        }
+
         composable(route = Screens.RaceConditions.route + "?email={email}" + "&friendEmail={friendEmail}"){ navBackStack ->
             val email: String = navBackStack.arguments?.getString("email").toString()
             val friendEmail: String = navBackStack.arguments?.getString("friendEmail").toString()

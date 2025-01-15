@@ -195,6 +195,41 @@ fun Menu(navController: NavController, currUserEmail: String?) {
         }
 
         Button(onClick = {
+            navController.navigate(Screens.TripHistory.route
+                .replace(
+                    oldValue = "{email}",
+                    newValue = currUserEmail.toString()
+                )
+            )
+        },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RectangleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xff321f12) // Set the button background color
+            )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.settings),
+                    contentDescription = "Settings Logo",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .padding(end = 16.dp)
+                        .align(Alignment.CenterVertically)
+                )
+
+                Text(
+                    text = "Trip History",
+                    style = TextStyle(fontSize = 18.sp) // Increases the font size
+                )
+            }
+        }
+
+        Button(onClick = {
             navController.navigate(Screens.Settings.route
                 .replace(
                     oldValue = "{email}",
@@ -224,36 +259,6 @@ fun Menu(navController: NavController, currUserEmail: String?) {
 
                 Text(
                     text = "Settings",
-                    style = TextStyle(fontSize = 18.sp) // Increases the font size
-                )
-            }
-        }
-        Button(onClick = {
-            // Handle Profile click
-
-        },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RectangleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xff321f12) // Set the button background color
-            )
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.settings),
-                    contentDescription = "Settings Logo",
-                    modifier = Modifier
-                        .size(36.dp)
-                        .padding(end = 16.dp)
-                        .align(Alignment.CenterVertically)
-                )
-
-                Text(
-                    text = "Example",
                     style = TextStyle(fontSize = 18.sp) // Increases the font size
                 )
             }

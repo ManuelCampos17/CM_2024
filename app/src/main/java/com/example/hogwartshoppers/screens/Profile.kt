@@ -376,6 +376,7 @@ fun ProfileScreen(navController: NavController, userMail: String) {
                                         userViewModel.updateUserHouse(currUser?.email ?: "", selectedHouse);
                                         userViewModel.updateUserName(currUser?.email ?: "", name);
                                         userViewModel.updateUserUsername(currUser?.email ?: "", username);
+                                        Thread.sleep(500)
                                         navController.navigate(Screens.Profile.route
                                             .replace(
                                                 oldValue = "{email}",
