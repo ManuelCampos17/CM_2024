@@ -213,7 +213,7 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
-                        .padding(top = 80.dp),
+                        .padding(top = 150.dp),
                     verticalArrangement = Arrangement.Center
                 ) {
                     Box(

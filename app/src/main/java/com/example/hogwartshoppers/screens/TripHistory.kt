@@ -6,16 +6,24 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -34,13 +42,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.R
+import com.example.hogwartshoppers.model.BroomTrip
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
@@ -51,12 +64,16 @@ fun TripHistoryScreen(navController: NavController, userMail: String) {
 
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
+    var userTrips by remember { mutableStateOf<List<BroomTrip>?>(null) }
 
     val broomViewModel: BroomViewModel = viewModel()
 
     LaunchedEffect(userMail) {
         userViewModel.getUserInfo(userMail) { user ->
             currUser = user // Update currUser with the fetched data
+        }
+        broomViewModel.getTrips(userMail) { trips ->
+            userTrips = trips
         }
     }
 
@@ -167,8 +184,8 @@ fun TripHistoryScreen(navController: NavController, userMail: String) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
-                        .padding(top = 80.dp),
-                    verticalArrangement = Arrangement.Center
+                        .padding(top = 150.dp),
+                    verticalArrangement = Arrangement.Top
                 ) {
                     Box(
                         modifier = Modifier
@@ -187,8 +204,149 @@ fun TripHistoryScreen(navController: NavController, userMail: String) {
                             color = Color.White
                         )
                     }
+                    Box(
+                        modifier = Modifier
+                            .size(350.dp, 800.dp)
+                            .background(Color(0xff4b2f1b), shape = RoundedCornerShape(16.dp))
+                            .padding(16.dp)
+                    ) {
+                        // Display trip history
+                        if (userTrips.isNullOrEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .wrapContentSize(Alignment.Center) // Centers both the text and image
+                            ) {
+                                Text(
+                                    text = "You have no trips",
+                                    color = Color.White,
+                                    fontSize = 40.sp, // Increases the text size
+                                    modifier = Modifier.align(Alignment.CenterHorizontally) // Centers the text horizontally
+                                )
+                                Spacer(modifier = Modifier.height(32.dp)) // Adds more space between the text and the image
+                                Image(
+                                    painter = painterResource(id = R.drawable.harry_pot_broom),
+                                    contentDescription = "No trips image",
+                                    modifier = Modifier
+                                        .fillMaxWidth() // Makes the image fill the width of the screen
+                                        .height(400.dp) // Adjusts the height of the image (you can increase this value)
+                                        .align(Alignment.CenterHorizontally) // Centers the image horizontally
+                                )
+                            }
+                        }
+                        else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                // Using count
+                                userTrips?.let {
+                                    items(it.size) { index ->
+                                        TripHistoryBox(
+                                            userEmail = userMail,
+                                            broomTrip = it[index]
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+@Composable
+fun TripHistoryBox(userEmail: String, broomTrip: BroomTrip) {
+    broomTrip?.let { trip ->
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
+                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .padding(12.dp)
+                .border(1.dp, Color(0xffd3d3d3), RoundedCornerShape(16.dp)) // Optional border
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
+            ) {
+                // Row for user and broom name
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Circular image
+                    Image(
+                        painter = painterResource(id = R.drawable.default_ahh),
+                        contentDescription = "Trip Placeholder",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, Color(0xff321f12), CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = trip.user,
+                            fontSize = 18.sp,
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = trip.broomName,
+                            fontSize = 16.sp,
+                            color = Color.Gray,
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Attributes Section
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AttributeRow(title = "Distance:", value = "${trip.distance} km")
+                    AttributeRow(title = "Date:", value = trip.date)
+                    AttributeRow(title = "Time:", value = trip.time)
+                    AttributeRow(title = "Price:", value = "$${trip.price}")
+                    AttributeRow(title = "Active:", value = if (trip.active) "Yes" else "No")
+                    AttributeRow(title = "Size:", value = trip.size)
+                    AttributeRow(title = "Charms:", value = trip.charms)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AttributeRow(title: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp), // Add horizontal padding
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            fontSize = 14.sp,
+            color = Color.Gray,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            color = Color.Black
+        )
+    }
+}
+
