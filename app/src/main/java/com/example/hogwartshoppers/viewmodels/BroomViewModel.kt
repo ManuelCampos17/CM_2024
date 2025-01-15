@@ -53,6 +53,36 @@ class BroomViewModel: ViewModel() {
         }
     }
 
+    // function to get info of the broom
+    fun getBroom(name: String, callback: (Broom?) -> Unit) {
+        broomsRef.orderByChild("Name").equalTo(name)
+            .limitToFirst(1) // Limit to the first matching broom
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.exists()) {
+                    val broomSnapshot = snapshot.children.first() // Get the first matching broom
+                    val broom = Broom(
+                        name = broomSnapshot.child("Name").value as String,
+                        category = broomSnapshot.child("Category").value as String,
+                        distance = (broomSnapshot.child("Distance").value as Long).toDouble(),
+                        price = convertToDouble(broomSnapshot.child("Price").value),
+                        latitude = convertToDouble(broomSnapshot.child("Latitude").value),
+                        longitude = convertToDouble(broomSnapshot.child("Longitude").value),
+                        available = broomSnapshot.child("Available").value as Boolean
+                    )
+                    callback(broom)
+                } else {
+                    callback(null) // No matching broom found
+                }
+            }
+            .addOnFailureListener { error ->
+                Log.e("Firebase", "Error fetching broom: ${error.message}")
+                callback(null)
+            }
+    }
+
+
+
     // function to update the distance of a broom
     // Updates distance
     fun updateDistanceBroom(distance: Double, name: String) {
