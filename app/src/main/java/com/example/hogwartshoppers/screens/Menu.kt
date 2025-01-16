@@ -82,10 +82,6 @@ fun Menu(navController: NavController, currUserEmail: String?) {
             onClick = {
                 navController.navigate(
                     Screens.HomeScreen.route
-                        .replace(
-                            oldValue = "{email}",
-                            newValue = currUserEmail.toString()
-                        )
                 )
             },
             modifier = Modifier.fillMaxWidth(),
@@ -121,10 +117,6 @@ fun Menu(navController: NavController, currUserEmail: String?) {
             onClick = {
                 navController.navigate(
                     Screens.Friends.route
-                        .replace(
-                            oldValue = "{email}",
-                            newValue = currUserEmail.toString()
-                        )
                         .replace(
                             oldValue = "{acceptedRequest}",
                             newValue = "false"
@@ -196,10 +188,6 @@ fun Menu(navController: NavController, currUserEmail: String?) {
 
         Button(onClick = {
             navController.navigate(Screens.TripHistory.route
-                .replace(
-                    oldValue = "{email}",
-                    newValue = currUserEmail.toString()
-                )
             )
         },
             modifier = Modifier.fillMaxWidth(),
@@ -231,12 +219,7 @@ fun Menu(navController: NavController, currUserEmail: String?) {
         }
 
         Button(onClick = {
-            navController.navigate(Screens.Forum.route
-                .replace(
-                    oldValue = "{email}",
-                    newValue = currUserEmail.toString()
-                )
-            )
+            navController.navigate(Screens.Forum.route)
         },
             modifier = Modifier.fillMaxWidth(),
             shape = RectangleShape,
@@ -267,12 +250,7 @@ fun Menu(navController: NavController, currUserEmail: String?) {
         }
 
         Button(onClick = {
-            navController.navigate(Screens.Settings.route
-                .replace(
-                    oldValue = "{email}",
-                    newValue = currUserEmail.toString()
-                )
-            )
+            navController.navigate(Screens.Settings.route)
         },
             modifier = Modifier.fillMaxWidth(),
             shape = RectangleShape,

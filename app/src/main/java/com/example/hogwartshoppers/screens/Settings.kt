@@ -61,16 +61,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(navController: NavController, userMail: String) {
+fun SettingsScreen(navController: NavController) {
+
+    val auth = FirebaseAuth.getInstance()
+    val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
 
-    LaunchedEffect(userMail) {
-        userViewModel.getUserInfo(userMail) { user ->
+    LaunchedEffect(authUser?.email.toString()) {
+        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
     }
@@ -257,9 +261,19 @@ fun SettingsScreen(navController: NavController, userMail: String) {
                             Text("Payment Options")
                         }
 
-                        // Sign Out Button
                         Button(
-                            onClick = {},
+                            onClick = {
+                                // Sign out the user from Firebase
+                                FirebaseAuth.getInstance().signOut()
+
+                                // Navigate to the Login screen
+                                navController.navigate(Screens.Login.route) {
+                                    // Clear the back stack to prevent returning to the previous screen
+                                    popUpTo(Screens.HomeScreen.route) {
+                                        inclusive = true
+                                    }
+                                }
+                            },
                             modifier = Modifier
                                 .size(275.dp, 35.dp)
                                 .fillMaxWidth(),
@@ -269,6 +283,7 @@ fun SettingsScreen(navController: NavController, userMail: String) {
                         ) {
                             Text("Sign Out")
                         }
+
 
                         Button(
                             onClick = {},

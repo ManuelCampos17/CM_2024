@@ -56,10 +56,15 @@ import androidx.navigation.NavController
 import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(navController: NavController, userMail: String) {
+
+    val auth = FirebaseAuth.getInstance()
+    val authUser = auth.currentUser
+
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
 
@@ -286,21 +291,23 @@ fun ProfileScreen(navController: NavController, userMail: String) {
                                 Spacer(modifier = Modifier.height(48.dp))
 
                                 // Edit Profile Button
-                                Button(
-                                    onClick = { editing = true },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFFBB9753),
-                                        contentColor = Color.White
-                                    ),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(48.dp)
-                                        .padding(horizontal = 32.dp)
-                                ) {
-                                    Text(
-                                        text = "Edit Profile",
-                                        fontSize = 18.sp
-                                    )
+                                if (authUser?.email.toString() == userMail) {
+                                    Button(
+                                        onClick = { editing = true },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFFBB9753),
+                                            contentColor = Color.White
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                            .padding(horizontal = 32.dp)
+                                    ) {
+                                        Text(
+                                            text = "Edit Profile",
+                                            fontSize = 18.sp
+                                        )
+                                    }
                                 }
                             }
                         }else{

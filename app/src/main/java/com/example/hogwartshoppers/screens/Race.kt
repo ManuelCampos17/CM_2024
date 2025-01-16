@@ -63,17 +63,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
-fun Race(navController: NavController, userMail: String, friendEmail: String) {
+fun Race(navController: NavController, friendEmail: String) {
+
+    val auth = FirebaseAuth.getInstance()
+    val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
     var friend by remember { mutableStateOf<User?>(null) }
 
-    LaunchedEffect(userMail) {
-        userViewModel.getUserInfo(userMail) { user ->
+    LaunchedEffect(authUser?.email.toString()) {
+        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
 
@@ -301,7 +305,6 @@ fun Race(navController: NavController, userMail: String, friendEmail: String) {
                                     onClick = {
                                         navController.navigate(
                                             Screens.Friends.route
-                                                .replace(oldValue = "{email}", newValue = userMail)
                                                 .replace(oldValue = "{acceptedRequest}", newValue = "false")
                                         )
                                     },
@@ -319,10 +322,6 @@ fun Race(navController: NavController, userMail: String, friendEmail: String) {
                                     onClick = {
                                         navController.navigate(
                                             Screens.HomeScreen.route
-                                                .replace(
-                                                    oldValue = "{email}",
-                                                    newValue = userMail.toString()
-                                                )
                                         )
                                     },
                                     modifier = Modifier

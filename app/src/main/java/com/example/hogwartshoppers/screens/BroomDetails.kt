@@ -34,10 +34,14 @@ import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
-fun BroomDetailsScreen(navController: NavController, userMail: String, selectedBroomName: String) {
+fun BroomDetailsScreen(navController: NavController, selectedBroomName: String) {
+    val auth = FirebaseAuth.getInstance()
+    val authUser = auth.currentUser
+
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
     val viewModel = BroomViewModel()
@@ -54,8 +58,8 @@ fun BroomDetailsScreen(navController: NavController, userMail: String, selectedB
         }
     }
 
-    LaunchedEffect(userMail) {
-        userViewModel.getUserInfo(userMail) { user ->
+    LaunchedEffect(authUser?.email.toString()) {
+        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
     }
@@ -246,7 +250,7 @@ fun BroomDetailsScreen(navController: NavController, userMail: String, selectedB
                     val context = LocalContext.current
 
                     Button(
-                        onClick = { selectedBroom?.let { rentBroom(navController, userMail, it, viewModel, context) } },
+                        onClick = { selectedBroom?.let { rentBroom(navController, authUser?.email.toString(), it, viewModel, context) } },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBB9753)),
                         modifier = Modifier.padding(8.dp)
                     ) {

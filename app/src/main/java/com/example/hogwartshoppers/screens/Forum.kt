@@ -74,11 +74,14 @@ import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.ForumViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun ForumScreen(navController: NavController, userMail: String) {
+fun ForumScreen(navController: NavController) {
+    val auth = FirebaseAuth.getInstance()
+    val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
     val forumViewModel: ForumViewModel = viewModel()
@@ -90,9 +93,9 @@ fun ForumScreen(navController: NavController, userMail: String) {
     var resultMessage by remember { mutableStateOf<String?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(userMail) {
+    LaunchedEffect(authUser?.email.toString()) {
         // Get the user info (if needed)
-        userViewModel.getUserInfo(userMail) { user ->
+        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
 
@@ -101,7 +104,7 @@ fun ForumScreen(navController: NavController, userMail: String) {
             allPosts = posts ?: emptyList() // Update allPosts safely
         }
 
-       forumViewModel.getPostsByUser(userMail) { posts ->
+       forumViewModel.getPostsByUser(authUser?.email.toString()) { posts ->
            myPosts = posts ?: emptyList() // Update allPosts safely
        }
     }
@@ -319,7 +322,7 @@ fun ForumScreen(navController: NavController, userMail: String) {
                                     allPosts?.let {
                                         items(it.size) { index ->
                                             PostBox(
-                                                userMail = userMail,
+                                                userMail = authUser?.email.toString(),
                                                 userEmail =it[index].userEmail,
                                                 title = it[index].title,
                                                 text = it[index].text,
@@ -347,7 +350,7 @@ fun ForumScreen(navController: NavController, userMail: String) {
                                     myPosts?.let {
                                         items(it.size) { index ->
                                             PostBox(
-                                                userMail = userMail,
+                                                userMail = authUser?.email.toString(),
                                                 userEmail =it[index].userEmail,
                                                 title = it[index].title,
                                                 text = it[index].text,
@@ -427,16 +430,12 @@ fun ForumScreen(navController: NavController, userMail: String) {
                                     onClick = {
                                         if (titleInput.isNotEmpty() && textInput.isNotEmpty()) {
                                             forumViewModel.createPost(
-                                                userEmail = userMail,
+                                                userEmail = authUser?.email.toString(),
                                                 title = titleInput,
                                                 text = textInput
                                             )
                                             Thread.sleep(400)
                                             navController.navigate(Screens.Forum.route
-                                                .replace(
-                                                    oldValue = "{email}",
-                                                    newValue = userMail.toString()
-                                                )
                                             )
                                         } else {
                                             resultMessage = "Please fill out both fields"
@@ -545,10 +544,6 @@ fun PostBox(userMail: String, userEmail: String,title: String,text: String, navC
                            forumViewModel.deletePost(userMail, title)
                             Thread.sleep(800)
                             navController.navigate(Screens.Forum.route
-                                .replace(
-                                    oldValue = "{email}",
-                                    newValue = userMail.toString()
-                                )
                             )
                         },
                         modifier = Modifier

@@ -62,17 +62,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
-fun RaceConditions(navController: NavController, userMail: String, friendEmail: String) {
+fun RaceConditions(navController: NavController, friendEmail: String) {
+
+    val auth = FirebaseAuth.getInstance()
+    val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
     var friend by remember { mutableStateOf<User?>(null) }
 
-    LaunchedEffect(userMail) {
-        userViewModel.getUserInfo(userMail) { user ->
+    LaunchedEffect(authUser?.email.toString()) {
+        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
 
@@ -302,7 +306,7 @@ fun RaceConditions(navController: NavController, userMail: String, friendEmail: 
                                     Screens.Friends.route
                                         .replace(
                                             oldValue = "{email}",
-                                            newValue = userMail
+                                            newValue = authUser?.email.toString()
                                         )
                                         .replace(
                                             oldValue = "{acceptedRequest}",
@@ -321,7 +325,7 @@ fun RaceConditions(navController: NavController, userMail: String, friendEmail: 
                         }
 
                         Button(
-                            onClick = {navController.navigate("race_screen/${userMail}/${friendEmail}")},
+                            onClick = {navController.navigate("race_screen/${friendEmail}")},
                             modifier = Modifier
                                 .size(275.dp, 50.dp)
                                 .fillMaxWidth()

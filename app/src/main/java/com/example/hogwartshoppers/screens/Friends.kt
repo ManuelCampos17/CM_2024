@@ -70,11 +70,14 @@ import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun FriendsScreen(navController: NavController, userMail: String, acceptedRequest: Boolean) {
+fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
+    val auth = FirebaseAuth.getInstance()
+    val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
     val broomViewModel: BroomViewModel = viewModel()
@@ -86,16 +89,16 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
     var showDialog by remember { mutableStateOf(false) }
 
 
-    LaunchedEffect(userMail) {
-        userViewModel.getUserInfo(userMail) { user ->
+    LaunchedEffect(authUser?.email.toString()) {
+        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
 
-        userViewModel.getFriends(userMail) { emails ->
+        userViewModel.getFriends(authUser?.email.toString()) { emails ->
             friendsEmails = emails
         }
 
-        userViewModel.getFriendRequests(userMail) { requests ->
+        userViewModel.getFriendRequests(authUser?.email.toString()) { requests ->
             friendRequests = requests
         }
     }
@@ -317,7 +320,7 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                                     friendsEmails?.let {
                                         items(it.size) { index ->
                                             FriendBox(
-                                                userEmail =userMail,
+                                                userEmail =authUser?.email.toString(),
                                                 email = it[index],
                                                 navController = navController
                                             )
@@ -347,7 +350,7 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                                                 requestEmail = requests[index],
                                                 navController = navController,
                                                 userViewModel = userViewModel,
-                                                email = userMail,
+                                                email = authUser?.email.toString(),
                                             )
                                         }
                                     }
@@ -421,12 +424,12 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                             confirmButton = {
                                 Button(
                                     onClick = {
-                                        if (emailInput.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(emailInput).matches() && emailInput != userMail)
+                                        if (emailInput.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(emailInput).matches() && emailInput != authUser?.email.toString())
                                         {
                                             if (friendsEmails?.contains(emailInput) == false) {
                                                 userViewModel.addFriendRequest(
                                                     email = emailInput,
-                                                    friendEmail = userMail
+                                                    friendEmail = authUser?.email.toString()
                                                 ) { success -> // TA AO CONTRARIO ON PURPOSE
                                                     resultMessage = if (success) {
                                                         "Friend Request Sent!" // Success message
@@ -443,7 +446,7 @@ fun FriendsScreen(navController: NavController, userMail: String, acceptedReques
                                             }
                                         }
                                         else {
-                                            if(emailInput == userMail)
+                                            if(emailInput == authUser?.email.toString())
                                                 resultMessage = "You can't add yourself as a friend!"
                                             else
                                                 resultMessage = "Please enter a valid email address"

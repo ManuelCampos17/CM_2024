@@ -39,6 +39,7 @@ import androidx.navigation.NavController
 import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun RegisterScreen(navController: NavController) {
@@ -51,6 +52,7 @@ fun RegisterScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+    val auth = FirebaseAuth.getInstance()
 
     Box(
         modifier = Modifier
@@ -112,25 +114,48 @@ fun RegisterScreen(navController: NavController) {
             // Register Button
             Button(
                 onClick = {
-                    if(username.isNotBlank() && email.isNotBlank() && password.isNotBlank()){
+                    if (username.isNotBlank() && email.isNotBlank() && password.isNotBlank()) {
                         isLoading = true
-                        userViewModel.registerUser(username, email, password){ success ->
-                            isLoading = false
-                            if(success){
-                                navController.navigate(Screens.Login.route)
-                            }else{
-                                errorMessage = "Registration failed: Email may already be in use"
+                        // Create user in Firebase Authentication
+                        auth.createUserWithEmailAndPassword(email, password)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    val userId = auth.currentUser?.uid
+                                    if (userId != null) {
+                                        // Register user in the Realtime Database using the ViewModel
+                                        userViewModel.registerUser(username, email) { success ->
+                                            isLoading = false
+                                            if (success) {
+                                                navController.navigate(Screens.Login.route)
+                                            } else {
+                                                errorMessage = "Failed to save user data to Realtime Database"
+                                            }
+                                        }
+                                    } else {
+                                        isLoading = false
+                                        errorMessage = "Failed to retrieve user ID"
+                                    }
+                                } else {
+                                    isLoading = false
+                                    errorMessage = task.exception?.localizedMessage ?: "Registration failed"
+                                }
                             }
-                        }
-                    }else{
+                            .addOnFailureListener { error ->
+                                isLoading = false
+                                errorMessage = error.localizedMessage ?: "Registration failed"
+                            }
+                    } else {
                         errorMessage = "All fields are required"
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFBB9753))
-            ) {
+                    containerColor = Color(0xFFBB9753)
+                )
+            )
+            {
                 if (isLoading) {
                     Text("Registering...")
                 } else {

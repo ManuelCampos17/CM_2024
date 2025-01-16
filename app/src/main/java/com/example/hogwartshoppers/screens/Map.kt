@@ -83,16 +83,20 @@ import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
-fun MapScreen(navController: NavController, userMail: String) {
+fun MapScreen(navController: NavController) {
+
+    val auth = FirebaseAuth.getInstance()
+    val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
 
-    LaunchedEffect(userMail) {
-        userViewModel.getUserInfo(userMail) { user ->
+    LaunchedEffect(authUser?.email.toString()) {
+        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
     }
@@ -514,7 +518,7 @@ fun MapScreen(navController: NavController, userMail: String) {
                 var hasTrip by remember { mutableStateOf<Boolean?>(false) }
                 var currTrip by remember { mutableStateOf<BroomTrip?>(null) }
 
-                viewmodel.getLastTrip(userMail) { trip ->
+                viewmodel.getLastTrip(currUser?.email.toString()) { trip ->
                     if (trip != null) {
                         if (trip.active) {
                             hasTrip = true
@@ -563,20 +567,9 @@ fun MapScreen(navController: NavController, userMail: String) {
                         // Accio Broom button
                         Button(
                             onClick = {
-                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-
-                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                                    if (location != null) {
-                                        userLocation = LatLng(location.latitude, location.longitude)
-
-                                        // Move this inside to ensure userLocation is updated before calling endTrip
-                                        viewmodel.endTrip(userMail, 10.0, userLocation!!) { ret ->
-                                            if (ret) {
-                                                hasTrip = false
-                                            }
-                                        }
-                                    } else {
-                                        Log.e("LocationError", "Failed to get location")
+                                viewmodel.endTrip(currUser?.email.toString(), 10.0, userLocation!!) { ret ->
+                                    if (ret) {
+                                        hasTrip = false
                                     }
                                 }
                             },

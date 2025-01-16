@@ -39,6 +39,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +65,7 @@ import com.example.hogwartshoppers.screens.NavGraph
 import com.example.hogwartshoppers.screens.Screens
 import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -92,6 +94,19 @@ fun Login(navController: NavController) {
 
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+
+    val auth = FirebaseAuth.getInstance()
+    val currentUser = auth.currentUser
+
+    LaunchedEffect(Unit) {
+        if(currentUser != null) {
+            navController.navigate(Screens.HomeScreen.route){
+                popUpTo(Screens.Login.route) {
+                    inclusive = true
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -141,30 +156,42 @@ fun Login(navController: NavController) {
             // Login Button
             Button(
                 onClick = {
-                    if(email.isNotBlank() && password.isNotBlank()){
+                    if (email.isNotBlank() && password.isNotBlank()) {
                         isLoading = true
-                        userViewModel.loginUser(email, password){ success ->
-                            isLoading = false
-                            if(success){
-                                navController.navigate(Screens.HomeScreen.route
-                                    .replace(
-                                        oldValue = "{email}",
-                                        newValue = email
+                        // Use Firebase Authentication to log in
+                        auth.signInWithEmailAndPassword(email, password)
+                            .addOnCompleteListener { task ->
+                                isLoading = false
+                                if (task.isSuccessful) {
+                                    // Navigate to the HomeScreen and pass the email as a parameter
+                                    navController.navigate(
+                                        Screens.HomeScreen.route.replace(
+                                            oldValue = "{email}",
+                                            newValue = email
+                                        )
                                     )
-                                )
-                            }else{
-                                errorMessage = "Login failed: Email/Password are incorrect!"
+                                } else {
+                                    // Display error message if login fails
+                                    errorMessage = task.exception?.localizedMessage ?:
+                                            "Login failed: Email/Password are incorrect!"
+                                }
                             }
-                        }
-                    }else{
+                            .addOnFailureListener { error ->
+                                isLoading = false
+                                errorMessage = error.localizedMessage ?: "An unknown error occurred"
+                            }
+                    } else {
                         errorMessage = "All fields are required"
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFBB9753))
-            ) {
+                    containerColor = Color(0xFFBB9753)
+                )
+            )
+            {
                 if (isLoading) {
                     Text("Validating...")
                 } else {

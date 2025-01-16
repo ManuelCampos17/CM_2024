@@ -57,10 +57,14 @@ import com.example.hogwartshoppers.model.BroomTrip
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
-fun TripHistoryScreen(navController: NavController, userMail: String) {
+fun TripHistoryScreen(navController: NavController) {
+
+    val auth = FirebaseAuth.getInstance()
+    val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
@@ -68,11 +72,11 @@ fun TripHistoryScreen(navController: NavController, userMail: String) {
 
     val broomViewModel: BroomViewModel = viewModel()
 
-    LaunchedEffect(userMail) {
-        userViewModel.getUserInfo(userMail) { user ->
+    LaunchedEffect(authUser?.email.toString()) {
+        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
-        broomViewModel.getTrips(userMail) { trips ->
+        broomViewModel.getTrips(authUser?.email.toString()) { trips ->
             userTrips = trips
         }
     }
@@ -243,7 +247,7 @@ fun TripHistoryScreen(navController: NavController, userMail: String) {
                                 userTrips?.let {
                                     items(it.size) { index ->
                                         TripHistoryBox(
-                                            userEmail = userMail,
+                                            userEmail = authUser?.email.toString(),
                                             broomTrip = it[index]
                                         )
                                     }

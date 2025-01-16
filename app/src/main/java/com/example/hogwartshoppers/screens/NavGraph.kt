@@ -21,20 +21,17 @@ fun NavGraph(navController: NavHostController) {
             RegisterScreen(navController = navController)
         }
 
-        composable(route = Screens.HomeScreen.route + "?email={email}"){ navBackStack ->
-            val email: String = navBackStack.arguments?.getString("email").toString()
-            MapScreen(navController = navController, userMail = email)
+        composable(route = Screens.HomeScreen.route){
+            MapScreen(navController = navController)
         }
 
-        composable(route = Screens.Settings.route + "?email={email}"){ navBackStack ->
-            val email: String = navBackStack.arguments?.getString("email").toString()
-            SettingsScreen(navController = navController, userMail = email)
+        composable(route = Screens.Settings.route){
+            SettingsScreen(navController = navController)
         }
 
-        composable(route = Screens.BroomDetails.route + "?email={email}" + "&broom={broom}"){ navBackStack ->
-            val email: String = navBackStack.arguments?.getString("email").toString()
+        composable(route = Screens.BroomDetails.route + "?broom={broom}"){ navBackStack ->
             val broom: String = navBackStack.arguments?.getString("broom").toString()
-            BroomDetailsScreen(navController = navController, userMail = email, selectedBroomName = broom)
+            BroomDetailsScreen(navController = navController, selectedBroomName = broom)
         }
 
         composable(route = Screens.Profile.route + "?email={email}"){ navBackStack ->
@@ -42,32 +39,27 @@ fun NavGraph(navController: NavHostController) {
             ProfileScreen(navController = navController, userMail = email)
         }
 
-        composable(route = Screens.Friends.route + "?email={email}" + "&acceptedRequest={acceptedRequest}"){ navBackStack ->
-            val email: String = navBackStack.arguments?.getString("email").toString()
+        composable(route = Screens.Friends.route + "?acceptedRequest={acceptedRequest}"){ navBackStack ->
             val acceptedRequest = navBackStack.arguments?.getString("acceptedRequest").toBoolean()
-            FriendsScreen(navController = navController, userMail = email, acceptedRequest = acceptedRequest)
+            FriendsScreen(navController = navController, acceptedRequest = acceptedRequest)
         }
 
-        composable(route = Screens.TripHistory.route + "?email={email}"){ navBackStack ->
-            val email: String = navBackStack.arguments?.getString("email").toString()
-            TripHistoryScreen(navController = navController, userMail = email)
+        composable(route = Screens.TripHistory.route){
+            TripHistoryScreen(navController = navController)
         }
 
-        composable(route = Screens.RaceConditions.route + "?email={email}" + "&friendEmail={friendEmail}"){ navBackStack ->
-            val email: String = navBackStack.arguments?.getString("email").toString()
+        composable(route = Screens.RaceConditions.route + "?friendEmail={friendEmail}"){ navBackStack ->
             val friendEmail: String = navBackStack.arguments?.getString("friendEmail").toString()
-            RaceConditions(navController = navController, userMail = email, friendEmail = friendEmail)
+            RaceConditions(navController = navController, friendEmail = friendEmail)
         }
 
-        composable(route = Screens.Race.route + "?email={email}" + "&friendEmail={friendEmail}") { navBackStack ->
-            val email: String = navBackStack.arguments?.getString("email").toString()
+        composable(route = Screens.Race.route + "?friendEmail={friendEmail}") { navBackStack ->
             val friendEmail: String = navBackStack.arguments?.getString("friendEmail").toString()
-            Race(navController = navController, userMail = email, friendEmail = friendEmail)
+            Race(navController = navController, friendEmail = friendEmail)
         }
 
-        composable(route = Screens.Forum.route + "?email={email}"){ navBackStack ->
-            val email: String = navBackStack.arguments?.getString("email").toString()
-            ForumScreen(navController = navController, userMail = email)
+        composable(route = Screens.Forum.route){
+            ForumScreen(navController = navController)
         }
     }
 }

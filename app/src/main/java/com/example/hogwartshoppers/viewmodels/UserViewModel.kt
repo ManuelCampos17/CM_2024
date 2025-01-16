@@ -45,7 +45,6 @@ class UserViewModel: ViewModel(){
                         val user = User(
                             username = it.child("username").value as String,
                             email = it.child("email").value as String,
-                            password = "", // Exclude the password
                             name = it.child("name").value as String,
                             house = it.child("house").value as String,
                             distance = when (val distanceValue = it.child("distance").value) {
@@ -70,7 +69,7 @@ class UserViewModel: ViewModel(){
     }
 
     // function to register new users
-    fun registerUser(username: String, email: String, password: String, callback: (Boolean) -> Unit) {
+    fun registerUser(username: String, email: String, callback: (Boolean) -> Unit) {
         // Check if the email is already registered
         usersRef.get().addOnSuccessListener { snapshot ->
             // Search for an existing user with the same email
@@ -83,7 +82,6 @@ class UserViewModel: ViewModel(){
                 val user = User(
                     username = username,
                     email = email,
-                    password = password,
                     name = "",
                     house = "",
                     distance = 0.0,
