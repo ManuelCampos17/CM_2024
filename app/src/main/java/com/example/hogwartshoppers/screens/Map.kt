@@ -563,9 +563,20 @@ fun MapScreen(navController: NavController, userMail: String) {
                         // Accio Broom button
                         Button(
                             onClick = {
-                                viewmodel.endTrip(userMail, 10.0) { ret ->
-                                    if (ret) {
-                                        hasTrip = false
+                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                    if (location != null) {
+                                        userLocation = LatLng(location.latitude, location.longitude)
+
+                                        // Move this inside to ensure userLocation is updated before calling endTrip
+                                        viewmodel.endTrip(userMail, 10.0, userLocation!!) { ret ->
+                                            if (ret) {
+                                                hasTrip = false
+                                            }
+                                        }
+                                    } else {
+                                        Log.e("LocationError", "Failed to get location")
                                     }
                                 }
                             },

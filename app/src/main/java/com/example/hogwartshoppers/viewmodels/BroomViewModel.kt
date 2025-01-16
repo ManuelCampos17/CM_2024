@@ -10,6 +10,7 @@ import com.example.hogwartshoppers.model.Broom
 import androidx.lifecycle.ViewModel
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.model.BroomTrip
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.database.FirebaseDatabase
 import java.text.SimpleDateFormat
 import java.time.LocalTime
@@ -197,7 +198,7 @@ class BroomViewModel: ViewModel() {
     }
 
     // acabar uma trip
-    fun endTrip(userEmail: String, distance: Double, callback: (Boolean) -> Unit) {
+    fun endTrip(userEmail: String, distance: Double, userLoc: LatLng, callback: (Boolean) -> Unit) {
         // Fetch the last trip for the user
         tripsRef.child(userEmail.replace(".", "|"))
             .orderByKey()  // Order by key (ID)
@@ -255,6 +256,8 @@ class BroomViewModel: ViewModel() {
                                     "distance" to newDistance,  // Set the summed distance
                                     "price" to price
                                 )
+
+                                updateLocation(broom.name, userLoc.latitude, userLoc.longitude)
 
                                 // Update the last trip with the new data
                                 tripRef.updateChildren(updatedTrip)
