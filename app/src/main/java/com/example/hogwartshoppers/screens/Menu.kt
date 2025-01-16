@@ -214,17 +214,18 @@ fun Menu(navController: NavController, currUserEmail: String?) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.settings),
-                    contentDescription = "Settings Logo",
+                    painter = painterResource(id = R.drawable.trip_history_logo),
+                    contentDescription = "Trip History Logo",
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(42.dp)
                         .padding(end = 16.dp)
                         .align(Alignment.CenterVertically)
                 )
 
                 Text(
                     text = "Trip History",
-                    style = TextStyle(fontSize = 18.sp) // Increases the font size
+                    style = TextStyle(fontSize = 18.sp),
+                    modifier = Modifier.offset(x = (-5).dp)
                 )
             }
         }
@@ -249,17 +250,18 @@ fun Menu(navController: NavController, currUserEmail: String?) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.settings),
-                    contentDescription = "Settings Logo",
+                    painter = painterResource(id = R.drawable.forum_logo),
+                    contentDescription = "Forum Logo",
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(46.dp)
                         .padding(end = 16.dp)
                         .align(Alignment.CenterVertically)
                 )
 
                 Text(
                     text = "Forum",
-                    style = TextStyle(fontSize = 18.sp) // Increases the font size
+                    style = TextStyle(fontSize = 18.sp) ,// Increases the font size
+                    modifier = Modifier.offset(x = (-6).dp)
                 )
             }
         }
