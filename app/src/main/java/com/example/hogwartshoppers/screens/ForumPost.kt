@@ -20,9 +20,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -64,12 +67,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.Posts
+import com.example.hogwartshoppers.model.Replies
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.ForumViewModel
@@ -81,16 +87,17 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 @Composable
-fun ForumScreen(navController: NavController) {
+fun ForumPostScreen(navController: NavController, postEmail: String, postTitle: String) {
     val auth = FirebaseAuth.getInstance()
     val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
     val forumViewModel: ForumViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
+    var postUser by remember { mutableStateOf<User?>(null) }
     var allPosts by remember { mutableStateOf<List<Posts>?>(emptyList()) }
-    var myPosts by remember { mutableStateOf<List<Posts>?>(emptyList()) }
-    var titleInput by remember { mutableStateOf("") }
+    var currentPost by remember { mutableStateOf<Posts?>(null) }
+    var postReplies by remember { mutableStateOf<List<Replies>?>(emptyList()) }
     var textInput by remember { mutableStateOf("") }
     var resultMessage by remember { mutableStateOf<String?>(null) }
     var showDialog by remember { mutableStateOf(false) }
@@ -102,20 +109,26 @@ fun ForumScreen(navController: NavController) {
         }
 
         // Fetch the posts
-        forumViewModel.getPosts { posts ->
+        forumViewModel.getPostsByUser(postEmail) { posts ->
             allPosts = posts ?: emptyList() // Update allPosts safely
         }
 
-       forumViewModel.getPostsByUser(authUser?.email.toString()) { posts ->
-           myPosts = posts ?: emptyList() // Update allPosts safely
-       }
+        userViewModel.getUserInfo(postEmail) { user ->
+            postUser = user // Update currUser with the fetched data
+        }
     }
 
-    var selectedTab by remember { mutableStateOf("All Posts") }
-    val switchPosition by animateDpAsState(
-        targetValue = if (selectedTab == "All Posts") 0.dp else 200.dp, label = "" // Adjust width
-    )
+    Log.d("Post Title", "Post Title: $postTitle")
 
+    Log.d("All Posts", "All Posts: $allPosts")
+    // search for the title in allPosts
+    currentPost = allPosts?.find { it.title == postTitle }
+
+    Log.d("Current Post", "Current Post: $currentPost")
+
+    forumViewModel.getReplies(postTitle) { replies ->
+        postReplies = replies ?: emptyList() // Update allPosts safely
+    }
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -210,6 +223,9 @@ fun ForumScreen(navController: NavController) {
                     .background(Color(0xff321f12))
                     .border(3.dp, Color(0xFFBB9753))
                     .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .wrapContentHeight()
+                    .heightIn(min = 900.dp)
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.hogwartslogo),
@@ -219,147 +235,94 @@ fun ForumScreen(navController: NavController) {
                         .size(200.dp) // Adjust size as needed
                         .padding(bottom = 15.dp)
                 )
+
+
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
-                        .padding(top = 150.dp),
+                        .padding(top = 170.dp),
                     verticalArrangement = Arrangement.Center
                 ) {
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .size(350.dp, 70.dp) // Set specific width and height
-                            .padding(bottom = 30.dp)
+                            .width(350.dp)
+                            .wrapContentHeight()
                             .background(
                                 color = Color(0xff4b2f1b), // Brown background
                                 shape = RoundedCornerShape(16.dp) // Makes corners rounded
                             ),
-                        contentAlignment = Alignment.Center // Centers the text inside the box
 
-                    ) {
-                        Text(
-                            text = "Forum",
-                            color = Color.White
-                        )
-                    }
-                    // Tab Switcher Row
-                    Box(
-                        modifier = Modifier
-                            .size(350.dp, 60.dp)
-                            .padding(bottom = 16.dp)
-                            .background(
-                                color = Color(0xff321f12), // Background color for unselected area
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                    ) {
-                        // Moving switch (animated)
-                        Box(
-                            modifier = Modifier
-                                .offset(x = switchPosition)
-                                .size(150.dp, 60.dp) // Match button sizes
-                                .background(
-                                    color = Color(0xffBB9753), // Highlight color for the selected tab
-                                    shape = RoundedCornerShape(16.dp)
+                        ) {
+                        Column() {
+                            // Row to hold the image, username, and name
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                                    .background(
+                                        color = Color(0xff4b2f1b), // Brown background
+                                        shape = RoundedCornerShape(16.dp) // Makes corners rounded
+                                    )
+                                    .padding(8.dp),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+
+                                Image(
+                                    painter = painterResource(id = R.drawable.default_ahh),
+                                    contentDescription = "Friend Placeholder",
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape) // Make the image circular
+                                        .border(
+                                            1.dp,
+                                            Color(0xff321f12),
+                                            CircleShape
+                                        ), // Optional border for the circle
+                                    contentScale = ContentScale.Crop // Ensures the image fits within the circle
                                 )
-                        )
 
-                        Button(
-                            onClick = { selectedTab = "All Posts" },
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .size(150.dp, 40.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = if (selectedTab != "My Posts") ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753))
-                            else ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b)),
-                            elevation = ButtonDefaults.elevatedButtonElevation(0.dp)
-                        ) {
-                            Text(
-                                text = "All Posts",
-                                color = Color.White, // Text color based on state
-                                modifier = Modifier.zIndex(1f)
-                            )
-                        }
+                                Spacer(modifier = Modifier.width(8.dp))
 
-                        Button(
-                            onClick = { selectedTab = "My Posts" },
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .size(150.dp, 60.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = if (selectedTab == "My Posts") ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753))
-                            else ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b)),
-                            elevation = ButtonDefaults.elevatedButtonElevation(0.dp)
-                        ) {
-                            Text(
-                                text = "My Posts",
-                                color = Color.White, // Text color based on state
-                                modifier = Modifier.zIndex(1f)
-                            )
-                        }
-                    }
-
-                    // Content Box
-                    Box(
-                        modifier = Modifier
-                            .size(350.dp, 500.dp)
-                            .background(Color(0xff4b2f1b), shape = RoundedCornerShape(16.dp))
-                            .padding(16.dp)
-                    ) {
-                        if (selectedTab == "All Posts") {
-
-                            if (allPosts.isNullOrEmpty())
                                 Text(
-                                    text = "Loading...",
-                                    color = Color.White,
-                                    modifier = Modifier.fillMaxSize()
-                                        .align(Alignment.Center))
-                            else {
-                                LazyColumn(
-                                    modifier = Modifier.fillMaxSize(),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    // Using count
-                                    allPosts?.let {
-                                        items(it.size) { index ->
-                                            PostBox(
-                                                userMail = authUser?.email.toString(),
-                                                userEmail =it[index].userEmail,
-                                                title = it[index].title,
-                                                text = it[index].text,
-                                                navController = navController
-                                            )
-                                        }
-                                    }
-                                }
+                                    text = postUser?.name ?: "Loading...",
+                                    color = Color.White
+                                )
                             }
-                        } else if (selectedTab == "My Posts") {
+                            Text(
+                                text = "Title:",
+                                color = Color.White,
+                                modifier = Modifier.padding(top = 8.dp, start = 8.dp)
+                            )
+                            Text(
+                                modifier = Modifier.padding(
+                                    top = 8.dp,
+                                    start = 8.dp,
+                                    bottom = 8.dp
+                                ),
+                                text = currentPost?.title ?: "Loading...",
+                                color = Color.White
+                            )
 
-                            if (myPosts.isNullOrEmpty()) {
-                                Text(
-                                    text = "You haven't created any post!",
-                                    color = Color.White,
-                                    modifier = Modifier.fillMaxSize()
-                                        .align(Alignment.Center)
-                                )
-                            } else {
-                                LazyColumn(
-                                    modifier = Modifier.fillMaxSize(),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 150.dp) // Cap the height at 300.dp
+                                    .padding(12.dp)
+                                    .background(Color.White, shape = RoundedCornerShape(16.dp))
+                                    .padding(16.dp)
+                                    .clipToBounds() // Ensures content does not overflow
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
                                 ) {
-                                    // Using count
-                                    myPosts?.let {
-                                        items(it.size) { index ->
-                                            PostBox(
-                                                userMail = authUser?.email.toString(),
-                                                userEmail =it[index].userEmail,
-                                                title = it[index].title,
-                                                text = it[index].text,
-                                                navController = navController
-                                            )
-                                        }
-                                    }
+                                    Text(
+                                        text = currentPost?.text ?: "Loading...",
+                                        color = Color.Black // Changed to black for visibility against white background
+                                    )
                                 }
                             }
                         }
@@ -377,7 +340,7 @@ fun ForumScreen(navController: NavController) {
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Text(text = "Create Post", color = Color.White)
+                            Text(text = "Reply to Post", color = Color.White)
                         }
                     }
 
@@ -386,28 +349,17 @@ fun ForumScreen(navController: NavController) {
                             onDismissRequest = { showDialog = false },
                             title = {
                                 Text(
-                                    text = "Post Creation",
+                                    text = "Reply Creation",
                                     color = Color.White // Title text color
                                 )
                             },
                             text = {
                                 Column {
-                                    // Post Title Input Field
-                                    OutlinedTextField(
-                                        value = titleInput,
-                                        onValueChange = { titleInput = it },
-                                        label = { Text("Post Title") },
-                                        singleLine = true, // To keep it as a single-line input field
-                                        textStyle = TextStyle(color = Color.White),
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    // Post Text Input Field (Larger text area)
+                                    // Reply Text Input Field (Larger text area)
                                     OutlinedTextField(
                                         value = textInput,
                                         onValueChange = { textInput = it },
-                                        label = { Text("Post Text") },
+                                        label = { Text("Reply Text") },
                                         maxLines = 5, // Set a max number of lines for the text area
                                         minLines = 3, // Minimum number of lines (to avoid the field being too small)
                                         textStyle = TextStyle(color = Color.White),
@@ -430,24 +382,25 @@ fun ForumScreen(navController: NavController) {
                             confirmButton = {
                                 Button(
                                     onClick = {
-                                        if (titleInput.isNotEmpty() && textInput.isNotEmpty()) {
-                                            forumViewModel.createPost(
+                                        if (textInput.isNotEmpty()) {
+                                            forumViewModel.createReply(
                                                 userEmail = authUser?.email.toString(),
-                                                title = titleInput,
+                                                title = postTitle,
                                                 text = textInput
                                             )
                                             Thread.sleep(400)
-                                            navController.navigate(Screens.Forum.route
-                                            )
+                                            val encodedTitle = URLEncoder.encode(postTitle, StandardCharsets.UTF_8.toString())
+                                            val finalEncodedTitle = encodedTitle.replace("+", "%20")
+                                            navController.navigate("forum_post_screen/$postEmail/$finalEncodedTitle")
                                         } else {
-                                            resultMessage = "Please fill out both fields"
+                                            resultMessage = "Empty replies are not allowed!"
                                         }
                                     },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xffBB9753)
                                     )
                                 ) {
-                                    Text("Create Post", color = Color.White)
+                                    Text("Create Reply", color = Color.White)
                                 }
                             },
                             dismissButton = {
@@ -464,6 +417,60 @@ fun ForumScreen(navController: NavController) {
                             containerColor = Color(0xff4b2f1b)
                         )
                     }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .size(350.dp, 70.dp) // Set specific width and height
+                            .padding(bottom = 16.dp, top = 16.dp)
+                            .background(
+                                color = Color(0xff4b2f1b), // Brown background
+                                shape = RoundedCornerShape(16.dp) // Makes corners rounded
+                            ),
+                        contentAlignment = Alignment.Center // Centers the text inside the box
+
+                    ) {
+                        Text(
+                            text = "Replies",
+                            color = Color.White
+                        )
+                    }
+
+                    // Content Box
+                    Box(
+                        modifier = Modifier
+                            .width(350.dp)
+                            .wrapContentHeight()
+                            .background(Color(0xff4b2f1b), shape = RoundedCornerShape(16.dp))
+                            .padding(8.dp)
+                    ) {
+                        if (postReplies.isNullOrEmpty())
+                            Text(
+                                text = "There are no replies yet!",
+                                color = Color.White,
+                                modifier = Modifier.fillMaxSize()
+                                    .align(Alignment.Center))
+
+
+                        else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize() // Takes up the full size of the parent
+                                    .padding(8.dp), // Optional padding around the content
+                                verticalArrangement = Arrangement.spacedBy(12.dp) // Spacing between items
+                            ) {
+                                postReplies?.let { replies ->
+                                    replies.forEach { reply ->
+                                        ReplyBox(
+                                            userMail = authUser?.email.toString(),
+                                            userEmail = reply.userEmail,
+                                            text = reply.text
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -471,16 +478,16 @@ fun ForumScreen(navController: NavController) {
 }
 
 @Composable
-fun PostBox(userMail: String, userEmail: String,title: String,text: String, navController: NavController) {
+fun ReplyBox(userMail: String, userEmail: String,text: String) {
 
     var userViewModel: UserViewModel = viewModel()
     var forumViewModel: ForumViewModel = viewModel()
-    var postUser by remember { mutableStateOf<User?>(null) }
+    var replyUser by remember { mutableStateOf<User?>(null) }
 
     LaunchedEffect(userEmail) {
         // Get the user info (if needed)
         userViewModel.getUserInfo(userEmail) { user ->
-            postUser = user // Update currUser with the fetched data
+            replyUser = user // Update currUser with the fetched data
         }
     }
 
@@ -494,7 +501,8 @@ fun PostBox(userMail: String, userEmail: String,title: String,text: String, navC
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Row to hold the image, username, and name
             Row(
@@ -513,70 +521,23 @@ fun PostBox(userMail: String, userEmail: String,title: String,text: String, navC
                     contentScale = ContentScale.Crop // Ensures the image fits within the circle
                 )
 
-                Column(
-                    modifier = Modifier.padding(start = 16.dp)
-                ) {
-                    // Username
-                    Text(
-                        text = title,
-                        fontSize = 18.sp,
-                        color = Color.Black,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
+                Spacer(modifier = Modifier.width(8.dp))
 
-                    // Name
-                    Text(
-                        text = postUser?.username ?: "",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
-                }
+                // Username
+                Text(
+                    text = replyUser?.username ?: "Loading...",
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
             }
-
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp), // Padding around the row
-                horizontalArrangement = Arrangement.spacedBy(16.dp), // Adds space between the buttons
-            ) {
-                if(postUser?.email == userMail) {
-                    Button(
-                        onClick = {
-                           forumViewModel.deletePost(userMail, title)
-                            Thread.sleep(800)
-                            navController.navigate(Screens.Forum.route
-                            )
-                        },
-                        modifier = Modifier
-                            .weight(1f) // Make the second button take up equal space
-                            .padding(top = 24.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Text(text = "Delete Post", color = Color.White)
-                    }
-                }
-
-                Button(
-                    onClick = {
-                        // Navigate to post screen
-                        // Encode the title
-                        val encodedTitle = URLEncoder.encode(title, StandardCharsets.UTF_8.toString())
-                        // Replace '+' (which represents spaces) with '%20'
-                        val finalEncodedTitle = encodedTitle.replace("+", "%20")
-                        navController.navigate("forum_post_screen/$userEmail/$finalEncodedTitle")
-                    },
-                    modifier = Modifier
-                        .weight(1f) // Make the button take up equal space in the row
-                        .padding(top = 24.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text(text = "View Post", color = Color.White)
-                }
-            }
-
+            // Name
+            Text(
+                text = text,
+                fontSize = 16.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Start
+            )
         }
     }
 }

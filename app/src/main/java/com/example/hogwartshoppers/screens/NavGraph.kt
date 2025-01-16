@@ -61,5 +61,12 @@ fun NavGraph(navController: NavHostController) {
         composable(route = Screens.Forum.route){
             ForumScreen(navController = navController)
         }
+
+        composable(route = Screens.ForumPost.route + "?postEmail={postEmail}" + "&postTitle={postTitle}"){ navBackStack ->
+            val postEmail: String = navBackStack.arguments?.getString("postEmail").toString()
+            val postTitle: String = navBackStack.arguments?.getString("postTitle").toString()
+            ForumPostScreen(navController = navController, postEmail = postEmail, postTitle = postTitle)
+        }
+
     }
 }
