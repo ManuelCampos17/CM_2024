@@ -363,12 +363,12 @@ class UserViewModel: ViewModel(){
     }
 
     // remove the curse from the user
+    // Remove the curse from the user
     fun removeCurse(email: String) {
         magicRef.get().addOnSuccessListener { snapshot ->
-            // Iterate through all children to find the matching entry
             snapshot.children.forEach { child ->
-                val magicEntry = child.getValue(Magic::class.java)
-                if (magicEntry?.to == email) {
+                val toValue = child.child("to").value as? String
+                if (toValue == email) {
                     // Remove the matching child
                     child.ref.removeValue()
                 }
@@ -377,5 +377,4 @@ class UserViewModel: ViewModel(){
             Log.d("Magic", "Failed to remove curse: ${error.message}")
         }
     }
-
 }

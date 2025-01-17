@@ -83,8 +83,8 @@ fun Testing(navController: NavController) {
             override fun onDataChange(snapshot: DataSnapshot) {
                 // Iterate through the children in "Magic"
                 for (child in snapshot.children) {
-                    val magicEntry = child.getValue(Magic::class.java)
-                    if (magicEntry != null && magicEntry.to == authUser?.email) {
+                    val toValue = child.child("to").value as? String
+                    if (toValue == authUser?.email) {
                         event = true // Update event variable
                         break // Exit the loop once a match is found
                     }
