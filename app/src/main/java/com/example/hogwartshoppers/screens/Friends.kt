@@ -6,6 +6,8 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +60,7 @@ import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
 import kotlinx.coroutines.NonCancellable.start
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -88,6 +91,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
     var emailInput by remember { mutableStateOf("") }
     var resultMessage by remember { mutableStateOf<String?>(null) }
     var showDialog by remember { mutableStateOf(false) }
+    var isSent by remember { mutableStateOf(false) }
 
 
     LaunchedEffect(authUser?.email.toString()) {
@@ -365,14 +369,10 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                             .fillMaxWidth()
                             .padding(top = 16.dp)
                     ) {
-                        var isSent by remember { mutableStateOf(false) } // State to track if the request was sent
 
                         Button(
                             onClick = {
                                 showDialog = true
-                                if (resultMessage == "Friend Request Sent!") {
-                                    isSent = true // Set the button state to "Sent"
-                                }
                             },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
@@ -448,17 +448,20 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                                                 userViewModel.addFriendRequest(
                                                     email = emailInput,
                                                     friendEmail = authUser?.email.toString()
-                                                ) { success -> // TA AO CONTRARIO ON PURPOSE
+                                                ) { success ->
+                                                    isSent = true
                                                     resultMessage = if (success) {
                                                         "Friend Request Sent!" // Success message
                                                     } else {
-                                                        "You can't do that!" // Error message
+                                                        "" // Error message
                                                     }
                                                     showDialog =
                                                         false // Close the dialog after the action
 
                                                 }
                                             }
+                                            else if (userExists == false)
+                                                resultMessage = "User does not exist"
                                             else {
                                                 resultMessage = "You are already friends!"
                                                 Log.d("UserExists", "User already friends")
@@ -516,6 +519,63 @@ fun FriendBox(userEmail: String,email: String, navController: NavController, bro
     friend?.let { f ->
 
         var isFriendRiding by remember { mutableStateOf(true) }
+        var showImageDialog by remember { mutableStateOf(false) }
+        var friendRemoved by remember { mutableStateOf(false) }
+
+        // First pop-up dialog
+        if (showImageDialog) {
+            AlertDialog(
+                onDismissRequest = { showImageDialog = false },
+                title = {
+                    Text(text = "Are you sure you wanna remove ${f.username} from your friends list?",
+                        color = Color.White)
+                },
+                text = {
+                    Text("You won't be able to race or see this user's profile after this action.",
+                        color = Color.White)
+                },
+                confirmButton = {
+                    Button(onClick = {  showImageDialog = false
+                                        userViewModel.removeFriend(userEmail, f.email) { success ->
+                                             friendRemoved = success
+                                             if (success) {
+                                                 Thread.sleep(400)
+                                                 navController.navigate(
+                                                     Screens.Friends.route
+                                                         .replace(
+                                                             oldValue = "{email}",
+                                                             newValue = userEmail
+                                                         )
+                                                         .replace(
+                                                             oldValue = "{acceptedRequest}",
+                                                             newValue = "false"
+                                                         )
+                                                 )
+                                             } else {
+                                                Log.d("FriendBox", "Failed to remove friend")
+                                             }
+                                        }
+                                    },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xffBB9753) // Button background color
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.3f)) {
+                        Text("Yes")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { showImageDialog = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xffBB9753) // Button background color
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.3f)) {
+                        Text("No")
+                    }
+                },
+                shape = RoundedCornerShape(16.dp), // Rounded corners
+                containerColor = Color(0xff4b2f1b)
+            )
+        }
 
         Box(
             modifier = Modifier
@@ -528,6 +588,16 @@ fun FriendBox(userEmail: String,email: String, navController: NavController, bro
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.red_x),
+                    contentDescription = "X",
+                    modifier = Modifier
+                        .size(20.dp) // Set image size
+                        .clickable {
+                            showImageDialog = true
+                        }
+                        .align(Alignment.End)
+                )
                 // Row to hold the image, username, and name
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -606,6 +676,40 @@ fun FriendBox(userEmail: String,email: String, navController: NavController, bro
                         Text(text = "Race Friend", color = Color.White)
                     }
                 }
+
+                Button(
+                    onClick = {
+                        // Your button action here
+                    },
+                    modifier = Modifier
+                        .padding(top = 5.dp)
+                        .fillMaxWidth(), // Button will take up full width of its parent
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), // Make button's background transparent
+                    shape = RoundedCornerShape(16.dp) // Apply rounded corners to the button
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize() // Ensure the box takes up full size of the button
+                    ) {
+                        // Image as background with RoundedCorners
+                        Image(
+                            painter = painterResource(id = R.drawable.curse_texture), // Replace with your image resource
+                            contentDescription = "Button Background",
+                            modifier = Modifier
+                                .fillMaxSize() // Ensure image covers the button area
+                                .clip(RoundedCornerShape(16.dp)) // Apply rounded corners to the image
+                                .background(Color.Gray), // Optional: add a background if desired
+                            contentScale = ContentScale.Crop // Adjust how the image is scaled
+                        )
+
+                        // Text inside button (centered)
+                        Text(
+                            text = "Curse",
+                            color = Color.White,
+                            modifier = Modifier.align(Alignment.Center) // Center the text inside the button
+                        )
+                    }
+                }
+
                 if(!isFriendRiding) {
                     Text(
                         text = "You can't race a friend that isn't riding a broom!",

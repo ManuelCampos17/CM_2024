@@ -351,6 +351,22 @@ class UserViewModel: ViewModel(){
         }
     }
 
+    fun removeFriend(email: String, friendEmail: String, callback: (Boolean) -> Unit) {
+        val userFriendsRef = friendsRef.child(email.replace(".", "|"))
+        val friendRef = friendsRef.child(friendEmail.replace(".", "|"))
+        userFriendsRef.get().addOnSuccessListener { snapshot ->
+            val userFriends = snapshot.child("friends").value as? List<String> ?: emptyList()
+            val updatedUserFriends = userFriends.filter { it != friendEmail }
+            userFriendsRef.child("friends").setValue(updatedUserFriends).addOnSuccessListener {
+                callback(true) // Successfully updated the recipient's data
+            }.addOnFailureListener {
+                callback(false) // Failed to update the recipient's friends list
+            }
+        }.addOnFailureListener {
+            callback(false) // Failed to fetch the recipient's friends list
+            }
+    }
+
     // curse an user
     fun curseUser(email: String){
         magicRef.get().addOnSuccessListener { snapshot ->
