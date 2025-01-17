@@ -297,21 +297,29 @@ fun MapScreen(navController: NavController) {
                         }
                     }
             ) {
+                var hasTrip by remember { mutableStateOf<Boolean?>(false) }
+
                 // Show the map only if location is available
                 if (userLocation != null) {
-                    ShowGoogleMap(
-                        userLocation = userLocation!!,
-                        onMarkerClick = { broom ->
-                            selectedMarker = broom
-                        },
-                        broomVm = BroomViewModel()
-                    )
+                    hasTrip?.let {
+                        ShowGoogleMap(
+                            userLocation = userLocation!!,
+                            onMarkerClick = { broom ->
+                                selectedMarker = broom
+                            },
+                            broomVm = BroomViewModel(),
+                            hasTrip = it
+                        )
+                    }
                 }
 
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(20.dp)
+                        .padding(
+                            start = 20.dp,
+                            bottom = if (hasTrip == true) 220.dp else 20.dp // Adjust position when hasTrip is true
+                        )
                         .background(
                             color = Color(0xFF4C372A),
                             shape = RoundedCornerShape(16.dp)
@@ -515,8 +523,6 @@ fun MapScreen(navController: NavController) {
                 }
 
                 val viewmodel = BroomViewModel()
-
-                var hasTrip by remember { mutableStateOf<Boolean?>(false) }
                 var currTrip by remember { mutableStateOf<BroomTrip?>(null) }
 
                 viewmodel.getLastTrip(currUser?.email.toString()) { trip ->
@@ -673,7 +679,7 @@ fun getScaledMarkerIcon(context: Context, drawableId: Int, width: Int, height: I
 }
 
 @Composable
-fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm: BroomViewModel) {
+fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm: BroomViewModel, hasTrip: Boolean) {
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(userLocation, 17f)
     }
@@ -778,7 +784,7 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm:
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd) // Align to bottom-right
-                .padding(end = 5.dp, bottom = 5.dp) // Add padding from edges
+                .padding(end = 5.dp, bottom = if (hasTrip) 205.dp else 5.dp) // Add padding from edges
                 .size(80.dp) // Set button size
                 .zIndex(1f) // Ensure the button is above the map
         )
