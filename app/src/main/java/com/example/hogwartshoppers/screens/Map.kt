@@ -58,6 +58,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,6 +85,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ExecutorService
@@ -527,14 +529,50 @@ fun MapScreen(navController: NavController) {
                 }
 
                 if (hasTrip == true) {
+                    val sharedPreferences = context.getSharedPreferences("TimerPrefs", Context.MODE_PRIVATE)
+                    val editor = sharedPreferences.edit()
+
+                    // State to hold the start time
+                    var startTime by remember {
+                        mutableStateOf(sharedPreferences.getLong("startTime", -1L))
+                    }
+                    var timer by remember { mutableStateOf(0L) }
+                    val coroutineScope = rememberCoroutineScope()
+
+                    // Automatically set the start time if not already set
+                    LaunchedEffect(currTrip) {
+                        if (currTrip != null && startTime == -1L) {
+                            startTime = System.currentTimeMillis()
+                            editor.putLong("startTime", startTime).apply() // Save the start time
+                        }
+                    }
+
+                    // Update the timer
+                    LaunchedEffect(startTime) {
+                        coroutineScope.launch {
+                            while (true) {
+                                delay(1000)
+                                if (startTime != -1L) {
+                                    timer = (System.currentTimeMillis() - startTime) / 1000
+                                }
+                            }
+                        }
+                    }
+
+                    // Format timer as HH:mm:ss
+                    val formattedTime = remember(timer) {
+                        val hours = timer / 3600
+                        val minutes = (timer % 3600) / 60
+                        val seconds = timer % 60
+                        String.format("%02d:%02d:%02d", hours, minutes, seconds)
+                    }
+
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         // Background to intercept clicks
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
+                            modifier = Modifier.fillMaxSize()
                         )
 
                         // Overlay content
@@ -544,28 +582,48 @@ fun MapScreen(navController: NavController) {
                                 .padding(16.dp)
                                 .background(
                                     color = Color(0xFF321F12), // Brown background
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp) // Rounded corners
+                                    shape = RoundedCornerShape(16.dp) // Rounded corners
                                 )
                                 .padding(16.dp)
                                 .fillMaxWidth()
-                                .size(160.dp)
+                                .height(160.dp)
                         ) {
-                            // Broom details
-                            currTrip?.let {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .align(Alignment.Center),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                // Timer text
                                 Text(
-                                    text = it.broomName,
+                                    text = "Timer: $formattedTime",
                                     color = Color.White,
-                                    fontSize = 28.sp,
-                                    modifier = Modifier
-                                        .padding(bottom = 16.dp)
-                                        .align(Alignment.TopCenter)
+                                    fontSize = 20.sp,
+                                    modifier = Modifier.padding(bottom = 8.dp)
                                 )
+
+                                // Broom details
+                                currTrip?.let {
+                                    Text(
+                                        text = it.broomName,
+                                        color = Color.White,
+                                        fontSize = 28.sp,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
+                                }
                             }
                         }
 
-                        // Accio Broom button
+                        // Finish Trip button
                         Button(
                             onClick = {
+                                // Clear the start time and reset the timer
+                                editor.remove("startTime").apply()
+                                startTime = -1L
+                                timer = 0L
+
                                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
                                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
@@ -587,20 +645,15 @@ fun MapScreen(navController: NavController) {
                             },
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .background(
-                                    color = Color(0xFFDBC7A1),
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                        16.dp
-                                    )
-                                ), // Button color to match the image
+                                .padding(bottom = 16.dp)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(
-                                    0xFFDBC7A1
-                                )
-                            ) // Match image color
+                                containerColor = Color(0xFFDBC7A1) // Match image color
+                            )
                         ) {
                             Text(
-                                text = "End Trip",
+                                text = "Finish Trip",
                                 color = Color(0xFF321F12),
                                 fontSize = 18.sp,
                             )

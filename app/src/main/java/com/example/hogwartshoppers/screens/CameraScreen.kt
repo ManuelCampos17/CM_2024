@@ -16,7 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
@@ -65,6 +67,12 @@ fun CameraScreen(navController: NavController) {
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Take a picture of the broom safely parked:", color = Color.White)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         previewView?.let { view ->
             AndroidView(factory = { view }, modifier = Modifier.weight(1f))
         }
