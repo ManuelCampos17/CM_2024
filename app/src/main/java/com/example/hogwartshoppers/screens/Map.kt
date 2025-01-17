@@ -85,6 +85,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 @Composable
 fun MapScreen(navController: NavController) {
@@ -487,10 +490,6 @@ fun MapScreen(navController: NavController) {
                                     if (selectedBroom != null) {
                                         navController.navigate(Screens.BroomDetails.route
                                             .replace(
-                                                oldValue = "{email}",
-                                                newValue = currUser?.email.toString()
-                                            )
-                                            .replace(
                                                 oldValue = "{broom}",
                                                 newValue = selectedBroom.name
                                             )
@@ -567,9 +566,22 @@ fun MapScreen(navController: NavController) {
                         // Accio Broom button
                         Button(
                             onClick = {
-                                viewmodel.endTrip(currUser?.email.toString(), 10.0, userLocation!!) { ret ->
-                                    if (ret) {
-                                        hasTrip = false
+                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                    if (location != null) {
+                                        userLocation = LatLng(location.latitude, location.longitude)
+
+                                        // Move this inside to ensure userLocation is updated before calling endTrip
+                                        viewmodel.endTrip(authUser?.email.toString(), 10.0, userLocation!!, context) { ret ->
+                                            if (ret) {
+                                                hasTrip = false
+
+                                                navController.navigate(Screens.Camera.route)
+                                            }
+                                        }
+                                    } else {
+                                        Log.e("LocationError", "Failed to get location")
                                     }
                                 }
                             },

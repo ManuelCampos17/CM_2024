@@ -17,6 +17,10 @@ fun NavGraph(navController: NavHostController) {
             Login(navController = navController)
         }
 
+        composable(route = Screens.Camera.route) {
+            CameraScreen(navController = navController)
+        }
+
         composable(route = Screens.Register.route){
             RegisterScreen(navController = navController)
         }

@@ -1,22 +1,62 @@
 package com.example.hogwartshoppers.viewmodels
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
+import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import com.example.hogwartshoppers.model.Broom
 import androidx.lifecycle.ViewModel
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.model.BroomTrip
 import com.google.android.gms.maps.model.LatLng
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.firebase.database.FirebaseDatabase
+import java.io.File
 import java.text.SimpleDateFormat
 import java.time.LocalTime
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 sealed interface BroomUIState {
     data class Success(val broomInfo: List<Broom>) : BroomUIState
@@ -29,7 +69,6 @@ class BroomViewModel: ViewModel() {
     private val db: FirebaseDatabase = FirebaseDatabase.getInstance()
     val broomsRef = db.reference.child("Brooms")
     val tripsRef = db.reference.child("Trips")
-
 
     var broomUiState: BroomUIState by mutableStateOf(BroomUIState.Loading)
         private set
@@ -198,7 +237,7 @@ class BroomViewModel: ViewModel() {
     }
 
     // acabar uma trip
-    fun endTrip(userEmail: String, distance: Double, userLoc: LatLng, callback: (Boolean) -> Unit) {
+    fun endTrip(userEmail: String, distance: Double, userLoc: LatLng, context: Context, callback: (Boolean) -> Unit) {
         // Fetch the last trip for the user
         tripsRef.child(userEmail.replace(".", "|"))
             .orderByKey()  // Order by key (ID)
@@ -285,6 +324,7 @@ class BroomViewModel: ViewModel() {
                 Log.e("FirebaseError", "Error getting last rental ID", exception)
             }
     }
+
 
     // funcao para atualizar preço da trip
     fun updateTripPrice(userEmail: String, newPrice: Double, callback: (Boolean) -> Unit) {
