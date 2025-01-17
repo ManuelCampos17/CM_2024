@@ -79,7 +79,7 @@ fun Testing(navController: NavController) {
         val db: FirebaseDatabase = FirebaseDatabase.getInstance()
         val magicRef = db.getReference("Magic")
 
-        magicRef.addListenerForSingleValueEvent(object : ValueEventListener {
+        magicRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 // Iterate through the children in "Magic"
                 for (child in snapshot.children) {
