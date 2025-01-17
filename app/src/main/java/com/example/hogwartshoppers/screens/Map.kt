@@ -58,6 +58,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -94,6 +95,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.abs
 
 @Composable
 fun MapScreen(navController: NavController) {
@@ -290,7 +292,8 @@ fun MapScreen(navController: NavController) {
                             Icon(
                                 Icons.Filled.Menu,
                                 contentDescription = "Menu",
-                                modifier = Modifier.size(50.dp)
+                                modifier = Modifier
+                                    .size(50.dp)
                                     .align(Alignment.CenterStart)
                                     .padding(start = 4.dp),
 
@@ -336,6 +339,37 @@ fun MapScreen(navController: NavController) {
                             broomVm = BroomViewModel(),
                             hasTrip = it
                         )
+                    }
+                }
+
+                if (curse) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .background(Color.Red, shape = RoundedCornerShape(16.dp))
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = "You are being cursed! SHAKE YOUR PHONE!",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+
+                    ShakeDetector { shaken ->
+                        if (shaken) {
+                            val userViewmodel = UserViewModel()
+                            userViewmodel.removeCurse(authUser?.email.toString())
+                            curse = false
+                        }
                     }
                 }
 
@@ -535,8 +569,12 @@ fun MapScreen(navController: NavController) {
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
                                     .padding(top = 8.dp)
-                                    .background(color = Color(0xFFDBC7A1),
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)), // Button color to match the image
+                                    .background(
+                                        color = Color(0xFFDBC7A1),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                            16.dp
+                                        )
+                                    ), // Button color to match the image
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDBC7A1)) // Match image color
                             ) {
                                 Text(text = "Accio Broom",
@@ -705,6 +743,62 @@ fun getScaledMarkerIcon(context: Context, drawableId: Int, width: Int, height: I
 }
 
 @Composable
+fun ShakeDetector(
+    shakeThreshold: Float = 300f, // Adjust to prevent false positives
+    cooldownTime: Long = 1500, // Prevents multiple rapid triggers
+    onShake: (Boolean) -> Unit // Boolean indicates whether a shake was detected
+) {
+    val context = LocalContext.current
+    val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
+    val accelerometer = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
+
+    var lastUpdate by remember { mutableStateOf(System.currentTimeMillis()) }
+    var lastShakeTime by remember { mutableStateOf(0L) }
+    var lastX by remember { mutableStateOf(0f) }
+    var lastY by remember { mutableStateOf(0f) }
+    var lastZ by remember { mutableStateOf(0f) }
+
+    DisposableEffect(Unit) {
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                val curTime = System.currentTimeMillis()
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
+
+                // Calculate acceleration difference
+                val deltaX = x - lastX
+                val deltaY = y - lastY
+                val deltaZ = z - lastZ
+                val acceleration = (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ)
+
+                if (curTime - lastUpdate > 100) {
+                    lastUpdate = curTime
+
+                    // If acceleration exceeds threshold and cooldown time has passed
+                    if (acceleration > shakeThreshold && (curTime - lastShakeTime > cooldownTime)) {
+                        lastShakeTime = curTime
+                        onShake(true) // Trigger shake event
+                    }
+
+                    lastX = x
+                    lastY = y
+                    lastZ = z
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+
+        sensorManager.registerListener(listener, accelerometer, SensorManager.SENSOR_DELAY_UI)
+
+        onDispose {
+            sensorManager.unregisterListener(listener)
+        }
+    }
+}
+
+@Composable
 fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm: BroomViewModel, hasTrip: Boolean) {
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(userLocation, 17f)
@@ -810,7 +904,10 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm:
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd) // Align to bottom-right
-                .padding(end = 5.dp, bottom = if (hasTrip) 205.dp else 5.dp) // Add padding from edges
+                .padding(
+                    end = 5.dp,
+                    bottom = if (hasTrip) 205.dp else 5.dp
+                ) // Add padding from edges
                 .size(80.dp) // Set button size
                 .zIndex(1f) // Ensure the button is above the map
         )
