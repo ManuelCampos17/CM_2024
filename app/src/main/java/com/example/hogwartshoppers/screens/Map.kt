@@ -85,6 +85,10 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -100,7 +104,29 @@ fun MapScreen(navController: NavController) {
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
 
+    var curse by remember { mutableStateOf(false) }
+
     LaunchedEffect(authUser?.email.toString()) {
+
+        val db: FirebaseDatabase = FirebaseDatabase.getInstance()
+        val magicRef = db.getReference("Magic")
+
+        magicRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                // Iterate through the children in "Magic"
+                for (child in snapshot.children) {
+                    val toValue = child.child("to").value as? String
+                    if (toValue == authUser?.email) {
+                        curse = true // Update event variable
+                        break // Exit the loop once a match is found
+                    }
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {
+                Log.d("Magic", "Error fetching magic: ${error.message}")
+            }
+        })
+
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
