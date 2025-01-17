@@ -71,7 +71,6 @@ fun Testing(navController: NavController) {
     var userTrips by remember { mutableStateOf<List<BroomTrip>?>(null) }
 
     var event by remember { mutableStateOf(false) }
-
     val broomViewModel: BroomViewModel = viewModel()
 
     LaunchedEffect(authUser?.email.toString()) {
