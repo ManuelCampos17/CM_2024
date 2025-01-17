@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.hogwartshoppers.model.User
 import androidx.lifecycle.ViewModel
+import com.example.hogwartshoppers.model.Magic
 import com.google.firebase.database.FirebaseDatabase
 
 
@@ -22,6 +23,8 @@ class UserViewModel: ViewModel(){
     val usersRef = db.reference.child("Users")
     val friendsRef = db.reference.child("Friends")
     val friendsReqRef = db.reference.child("Friend_Requests")
+    val magicRef = db.reference.child("Magic")
+
 
     var userUiState: UserUIState by mutableStateOf(UserUIState.Loading)
         private set
@@ -347,4 +350,32 @@ class UserViewModel: ViewModel(){
             callback(null)
         }
     }
+
+    // curse an user
+    fun curseUser(email: String){
+        magicRef.get().addOnSuccessListener { snapshot ->
+            // Create a new magic entry
+            val curse = Magic(
+                to = email,
+            )
+            magicRef.push().setValue(curse)
+        }
+    }
+
+    // remove the curse from the user
+    fun removeCurse(email: String) {
+        magicRef.get().addOnSuccessListener { snapshot ->
+            // Iterate through all children to find the matching entry
+            snapshot.children.forEach { child ->
+                val magicEntry = child.getValue(Magic::class.java)
+                if (magicEntry?.to == email) {
+                    // Remove the matching child
+                    child.ref.removeValue()
+                }
+            }
+        }.addOnFailureListener { error ->
+            Log.d("Magic", "Failed to remove curse: ${error.message}")
+        }
+    }
+
 }

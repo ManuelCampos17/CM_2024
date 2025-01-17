@@ -278,5 +278,35 @@ fun Menu(navController: NavController, currUserEmail: String?) {
                 )
             }
         }
+
+        Button(onClick = {
+            navController.navigate(Screens.Testing.route)
+        },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RectangleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xff321f12) // Set the button background color
+            )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.settings),
+                    contentDescription = "Settings Logo",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .padding(end = 16.dp)
+                        .align(Alignment.CenterVertically)
+                )
+
+                Text(
+                    text = "Testing",
+                    style = TextStyle(fontSize = 18.sp) // Increases the font size
+                )
+            }
+        }
     }
 }
