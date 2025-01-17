@@ -1,5 +1,6 @@
 package com.example.hogwartshoppers.screens
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
@@ -80,8 +81,8 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
     val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
-    val broomViewModel: BroomViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
+    var allUsers by remember { mutableStateOf<List<User>?>(null) }
     var friendsEmails by remember { mutableStateOf<List<String>?>(null) }
     var friendRequests by remember { mutableStateOf<List<String>?>(null) }
     var emailInput by remember { mutableStateOf("") }
@@ -364,32 +365,36 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                             .fillMaxWidth()
                             .padding(top = 16.dp)
                     ) {
-                        // Button to trigger the pop-up
+                        var isSent by remember { mutableStateOf(false) } // State to track if the request was sent
+
                         Button(
-                            onClick = { showDialog = true },
+                            onClick = {
+                                showDialog = true
+                                if (resultMessage == "Friend Request Sent!") {
+                                    isSent = true // Set the button state to "Sent"
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSent) Color.Green else Color(0xffBB9753) // Dynamic color
+                            ),
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Text(text = "Add Friend", color = Color.White)
-                        }
-
-                        // Display result message
-                        resultMessage?.let {
                             Text(
-                                text = it,
-                                color = if (it == "Friend Request Sent!") Color.Green else Color.Red,
-                                modifier = Modifier.padding(top = 8.dp).align(Alignment.CenterHorizontally)
+                                text = if (isSent) "Friend Request Sent!" else "Add Friend", // Dynamic text
+                                color = Color.White
                             )
                         }
 
-                        // Use LaunchedEffect to delay and reset the result message after 5 seconds
-                        LaunchedEffect(resultMessage) {
-                            if (resultMessage != null) {
-                                delay(5000) // Wait for 5 seconds
-                                resultMessage = null // Reset the message
+// Reset state after 2 seconds when `isSent` is true
+                        if (isSent) {
+                            LaunchedEffect(isSent) {
+                                kotlinx.coroutines.delay(2000) // Wait for 2 seconds
+                                isSent = false // Reset the button state
                             }
                         }
+
+
                     }
 // Pop-up Dialog for entering email
                     if (showDialog) {
@@ -419,14 +424,27 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                                         color = Color.Red,
                                         fontSize = 12.sp
                                     )
+
+                                    // Display result message
+                                    resultMessage?.let {
+                                        Text(
+                                            text = it,
+                                            color = if (it == "Friend Request Sent!") Color.Green else Color.Red,
+                                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                                        )
+                                    }
                                 }
                             },
                             confirmButton = {
+                                var userExists = false
+                                userViewModel.userWithEmailExists(emailInput) { exists ->
+                                    userExists = exists
+                                }
                                 Button(
                                     onClick = {
-                                        if (emailInput.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(emailInput).matches() && emailInput != authUser?.email.toString())
-                                        {
-                                            if (friendsEmails?.contains(emailInput) == false) {
+                                        resultMessage = "Waiting for response..."
+                                        if (emailInput.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(emailInput).matches() && emailInput != authUser?.email.toString()) {
+                                            if ((friendsEmails?.contains(emailInput) == false || friendsEmails.isNullOrEmpty()) && userExists) {
                                                 userViewModel.addFriendRequest(
                                                     email = emailInput,
                                                     friendEmail = authUser?.email.toString()
@@ -443,13 +461,18 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                                             }
                                             else {
                                                 resultMessage = "You are already friends!"
+                                                Log.d("UserExists", "User already friends")
                                             }
                                         }
                                         else {
-                                            if(emailInput == authUser?.email.toString())
+                                            if(emailInput == authUser?.email.toString()) {
                                                 resultMessage = "You can't add yourself as a friend!"
-                                            else
+                                                Log.d("UserExists", "User already friends")
+                                            }
+                                            else {
                                                 resultMessage = "Please enter a valid email address"
+                                                Log.d("UserExists", "User does not exist")
+                                            }
                                         }
                                     },
                                     colors = ButtonDefaults.buttonColors(
@@ -568,11 +591,11 @@ fun FriendBox(userEmail: String,email: String, navController: NavController, bro
                         onClick = {
                             broomViewModel.isUserRiding(f.email) { success ->
                                 if (success) {
-                                    navController.navigate("race_conditions_screen/${userEmail}/${f.email}")
+                                    navController.navigate("race_conditions_screen/${f.email}")
                                 }
                                 else {
                                   //isFriendRiding = false
-                                    navController.navigate("race_conditions_screen/${userEmail}/${f.email}") // temp
+                                    navController.navigate("race_conditions_screen/${f.email}") // temp
                                 }
                             }
                         },

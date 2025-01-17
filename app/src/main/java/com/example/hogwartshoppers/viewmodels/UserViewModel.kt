@@ -114,6 +114,18 @@ class UserViewModel: ViewModel(){
         }
     }
 
+    fun userWithEmailExists(email: String, callback: (Boolean) -> Unit) {
+        // Query the database to find the user with the specified email
+        usersRef.orderByChild("email").equalTo(email).get()
+            .addOnSuccessListener { snapshot ->
+                val userExists = snapshot.exists()
+                callback(userExists)
+            }.addOnFailureListener { exception ->
+                Log.d("User Info", "Error fetching user: ${exception.message}")
+                callback(false) // Handle failure gracefully
+            }
+    }
+
     // função para atualizar a distancia
     fun updateUserDistance(email: String, distance: Double) {
         // Query the database to find the user with the matching email
