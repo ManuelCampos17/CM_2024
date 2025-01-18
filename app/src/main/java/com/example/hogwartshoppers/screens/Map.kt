@@ -46,6 +46,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
@@ -389,49 +390,295 @@ fun MapScreen(navController: NavController) {
                     }
                 }
 
-                if (curse) {
+                val viewmodel = BroomViewModel()
+                var currTrip by remember { mutableStateOf<BroomTrip?>(null) }
+
+                viewmodel.getLastTrip(currUser?.email.toString()) { trip ->
+                    if (trip != null) {
+                        if (trip.active) {
+                            hasTrip = true
+                            currTrip = trip
+                        }
+                    }
+                }
+
+                if (hasTrip == true) {
+                    val sharedPreferences = context.getSharedPreferences("TimerPrefs", Context.MODE_PRIVATE)
+                    val editor = sharedPreferences.edit()
+
+                    var startTime by remember {
+                        mutableStateOf(sharedPreferences.getLong("startTime", -1L))
+                    }
+                    var timer by remember { mutableStateOf(0L) }
+                    val coroutineScope = rememberCoroutineScope()
+
+                    LaunchedEffect(currTrip) {
+                        if (currTrip != null && startTime == -1L) {
+                            startTime = System.currentTimeMillis()
+                            editor.putLong("startTime", startTime).apply() // Save the start time
+                        }
+                    }
+
+                    // Update the timer
+                    LaunchedEffect(startTime) {
+                        coroutineScope.launch {
+                            while (true) {
+                                delay(1000)
+                                if (startTime != -1L) {
+                                    timer = (System.currentTimeMillis() - startTime) / 1000
+                                }
+                            }
+                        }
+                    }
+
+                    // Formato timer as HH:mm:ss
+                    val formattedTime = remember(timer) {
+                        val hours = timer / 3600
+                        val minutes = (timer % 3600) / 60
+                        val seconds = timer % 60
+                        String.format("%02d:%02d:%02d", hours, minutes, seconds)
+                    }
+
                     Box(
                         modifier = Modifier
-                            .size(size)
-                            .align(Alignment.Center),
-                        contentAlignment = Alignment.Center,
-
+                            .fillMaxSize()
+                            .offset(x = offsetCurse) // Apply the shake offset
                     ) {
+                        // Background to intercept clicks
+                        Box(
+                            modifier = Modifier.fillMaxSize()
+                        )
 
+                        // Overlay content
                         Box(
                             modifier = Modifier
-                                .background(Color.Transparent, shape = RoundedCornerShape(16.dp)) // Make the background transparent
+                                .align(Alignment.BottomCenter)
                                 .padding(16.dp)
+                                .background(
+                                    color = if (curse) Color(0xff324e3b) else Color(0xff321f12), // Brown background
+                                    shape = RoundedCornerShape(16.dp) // Rounded corners
+                                )
+                                .padding(16.dp)
+                                .fillMaxWidth()
+                                .height(160.dp)
                         ) {
-                            // Add the image behind the text but inside this box
-                            Image(
-                                painter = painterResource(id = R.drawable.death_mark),
-                                contentDescription = "Death Mark Inside Box",
+                            // Broom details
+                            currTrip?.let {
+                                Text(
+                                    text = it.broomName,
+                                    color = Color.White,
+                                    fontSize = 28.sp,
+                                    modifier = Modifier
+                                        .padding(bottom = 16.dp)
+                                        .align(Alignment.TopCenter)
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .padding(top = 32.dp)
+                                    .fillMaxWidth(),
+
+                                ) {
+                                // Use Box to layer images
+                                Box(
+                                    modifier = Modifier.size(100.dp) // Size of the Box
+                                ) {
+                                    // Bottom image
+                                    Image(
+                                        painter = painterResource(id = if (curse) R.drawable.background_for_broom_curse else R.drawable.background_for_broom),
+                                        contentDescription = "Broom Image",
+                                        modifier = Modifier.fillMaxSize() // Fills the Box
+                                    )
+
+                                    // Top image
+                                    Image(
+                                        painter = painterResource(id = R.drawable.nimbus_2000), // Replace with your overlay image resource
+                                        contentDescription = "Overlay Image",
+                                        modifier = Modifier
+                                            .size(90.dp) // Adjust size of the overlay image
+                                            .align(Alignment.Center) // Center it on top of the background image
+                                    )
+                                }
+                            }
+
+                            Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(8.dp), // Optionally adjust the padding
-                                contentScale = ContentScale.Crop, // Adjust how the image scales
-                                alpha = 0.7f // Adjust the transparency of the image
-                            )
+                                    .align(Alignment.Center),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
 
-                            // Text inside the Box
+                                Row(
+                                    horizontalArrangement = Arrangement.Start
+
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.time_trip),
+                                        contentDescription = "Time Trip Logo",
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .padding(start = 16.dp, end = 4.dp)
+                                            .align(Alignment.CenterVertically)
+                                    )
+
+                                    // Timer text
+                                    Text(
+                                        text = formattedTime,
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier.align(Alignment.CenterVertically)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Finish Trip button
+                        Button(
+                            onClick = {
+                                // Clear the start time and reset the timer
+                                editor.remove("startTime").apply()
+                                startTime = -1L
+                                timer = 0L
+
+                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                    if (location != null) {
+                                        userLocation = LatLng(location.latitude, location.longitude)
+
+                                        // Move this inside to ensure userLocation is updated before calling endTrip
+                                        viewmodel.endTrip(authUser?.email.toString(), 10.0, userLocation!!, context) { ret ->
+                                            if (ret) {
+                                                hasTrip = false
+
+                                                navController.navigate(Screens.Camera.route)
+                                            }
+                                        }
+                                    } else {
+                                        Log.e("LocationError", "Failed to get location")
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 16.dp)
+                                .offset(y = (-16).dp)
+                                .background(
+                                    color = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                        16.dp
+                                    )
+                                ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1) // Match image color
+                            )
+                        ) {
                             Text(
-                                text = "You are being cursed! SHAKE YOUR PHONE!",
-                                color = Color.Black,
-                                fontSize = 30.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(16.dp).align(Alignment.Center)
+                                text = "Finish Trip",
+                                color = Color(0xFF321F12),
+                                fontSize = 18.sp,
                             )
                         }
                     }
 
+                    if (curse) {
+                        Box(
+                            modifier = Modifier
+                                .size(size)
+                                .align(Alignment.Center),
+                            contentAlignment = Alignment.Center,
 
-                    ShakeDetector { shaken ->
-                        if (shaken) {
-                            val userViewmodel = UserViewModel()
-                            userViewmodel.removeCurse(authUser?.email.toString())
-                            curse = false
+                            ) {
+
+                            Box(
+                                modifier = Modifier
+                                    .background(Color.Transparent, shape = RoundedCornerShape(16.dp))
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center // Ensures everything inside is centered
+                            ) {
+                                // Image
+                                Image(
+                                    painter = painterResource(id = R.drawable.death_mark),
+                                    contentDescription = "Death Mark Inside Box",
+                                    modifier = Modifier.fillMaxSize(), // Ensures the image fills the Box
+                                    contentScale = ContentScale.Crop,
+                                    alpha = 0.7f
+                                )
+
+                                // Overlay Texts in a Column (Centered)
+                                Box(
+                                    modifier = Modifier.fillMaxSize(), // Ensures the column overlays the image
+                                    contentAlignment = Alignment.Center // Center the Column inside the Box
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(16.dp) // Space between texts
+                                    ) {
+                                        Text(
+                                            text = "You are being cursed! SHAKE YOUR PHONE!",
+                                            color = Color.Black,
+                                            fontSize = 30.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                        )
+
+                                        var timeLeft by remember { mutableStateOf(10) }
+
+                                        LaunchedEffect(timeLeft) {
+                                            while (timeLeft > 0) {
+                                                delay(1000L)
+                                                timeLeft--
+                                            }
+
+                                            if (timeLeft == 0) {
+                                                editor.remove("startTime").apply()
+                                                startTime = -1L
+                                                timer = 0L
+
+                                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+                                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                                    if (location != null) {
+                                                        userLocation = LatLng(location.latitude, location.longitude)
+
+                                                        viewmodel.endTrip(authUser?.email.toString(), 10.0, userLocation!!, context) { ret ->
+                                                            if (ret) {
+                                                                hasTrip = false
+
+                                                                val userViewmodel = UserViewModel()
+                                                                userViewmodel.removeCurse(authUser?.email.toString())
+                                                                curse = false
+                                                            }
+                                                        }
+                                                    } else {
+                                                        Log.e("LocationError", "Failed to get location")
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Text(
+                                            text = "Time Left: $timeLeft",
+                                            color = Color.Black,
+                                            fontSize = 30.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+
+                        ShakeDetector { shaken ->
+                            if (shaken) {
+                                val userViewmodel = UserViewModel()
+                                userViewmodel.removeCurse(authUser?.email.toString())
+                                curse = false
+                            }
                         }
                     }
                 }
@@ -642,7 +889,7 @@ fun MapScreen(navController: NavController) {
                                         shape = androidx.compose.foundation.shape.RoundedCornerShape(
                                             16.dp
                                         )
-                                    ), // Button color to match the image
+                                    ),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDBC7A1)) // Match image color
                             ) {
                                 Text(text = "Accio Broom",
@@ -650,201 +897,6 @@ fun MapScreen(navController: NavController) {
                                     fontSize = 18.sp,
                                 )
                             }
-                        }
-                    }
-                }
-
-                val viewmodel = BroomViewModel()
-                var currTrip by remember { mutableStateOf<BroomTrip?>(null) }
-
-                viewmodel.getLastTrip(currUser?.email.toString()) { trip ->
-                    if (trip != null) {
-                        if (trip.active) {
-                            hasTrip = true
-                            currTrip = trip
-                        }
-                    }
-                }
-
-                if (hasTrip == true) {
-                    val sharedPreferences = context.getSharedPreferences("TimerPrefs", Context.MODE_PRIVATE)
-                    val editor = sharedPreferences.edit()
-
-                    // State to hold the start time
-                    var startTime by remember {
-                        mutableStateOf(sharedPreferences.getLong("startTime", -1L))
-                    }
-                    var timer by remember { mutableStateOf(0L) }
-                    val coroutineScope = rememberCoroutineScope()
-
-                    // Automatically set the start time if not already set
-                    LaunchedEffect(currTrip) {
-                        if (currTrip != null && startTime == -1L) {
-                            startTime = System.currentTimeMillis()
-                            editor.putLong("startTime", startTime).apply() // Save the start time
-                        }
-                    }
-
-                    // Update the timer
-                    LaunchedEffect(startTime) {
-                        coroutineScope.launch {
-                            while (true) {
-                                delay(1000)
-                                if (startTime != -1L) {
-                                    timer = (System.currentTimeMillis() - startTime) / 1000
-                                }
-                            }
-                        }
-                    }
-
-                    // Format timer as HH:mm:ss
-                    val formattedTime = remember(timer) {
-                        val hours = timer / 3600
-                        val minutes = (timer % 3600) / 60
-                        val seconds = timer % 60
-                        String.format("%02d:%02d:%02d", hours, minutes, seconds)
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .offset(x = offsetCurse) // Apply the shake offset
-                    ) {
-                        // Background to intercept clicks
-                        Box(
-                            modifier = Modifier.fillMaxSize()
-                        )
-
-                        // Overlay content
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(16.dp)
-                                .background(
-                                    color = if (curse) Color(0xff324e3b) else Color(0xff321f12), // Brown background
-                                    shape = RoundedCornerShape(16.dp) // Rounded corners
-                                )
-                                .padding(16.dp)
-                                .fillMaxWidth()
-                                .height(160.dp)
-                        ) {
-                            // Broom details
-                            currTrip?.let {
-                                Text(
-                                    text = it.broomName,
-                                    color = Color.White,
-                                    fontSize = 28.sp,
-                                    modifier = Modifier
-                                        .padding(bottom = 16.dp)
-                                        .align(Alignment.TopCenter)
-                                )
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .padding(top = 32.dp)
-                                    .fillMaxWidth(),
-
-                                ) {
-                                // Use Box to layer images
-                                Box(
-                                    modifier = Modifier.size(100.dp) // Size of the Box
-                                ) {
-                                    // Bottom image
-                                    Image(
-                                        painter = painterResource(id = if (curse) R.drawable.background_for_broom_curse else R.drawable.background_for_broom),
-                                        contentDescription = "Broom Image",
-                                        modifier = Modifier.fillMaxSize() // Fills the Box
-                                    )
-
-                                    // Top image
-                                    Image(
-                                        painter = painterResource(id = R.drawable.nimbus_2000), // Replace with your overlay image resource
-                                        contentDescription = "Overlay Image",
-                                        modifier = Modifier
-                                            .size(90.dp) // Adjust size of the overlay image
-                                            .align(Alignment.Center) // Center it on top of the background image
-                                    )
-                                }
-                            }
-
-                                Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .align(Alignment.Center),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-
-                                Row(
-                                    horizontalArrangement = Arrangement.Start
-
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.time_trip),
-                                        contentDescription = "Time Trip Logo",
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .padding(start = 16.dp, end = 4.dp)
-                                            .align(Alignment.CenterVertically)
-                                    )
-
-                                    // Timer text
-                                    Text(
-                                        text = formattedTime,
-                                        color = Color.White,
-                                        fontSize = 18.sp,
-                                        modifier = Modifier.align(Alignment.CenterVertically)
-                                    )
-                                }
-                            }
-                        }
-
-                        // Finish Trip button
-                        Button(
-                            onClick = {
-                                // Clear the start time and reset the timer
-                                editor.remove("startTime").apply()
-                                startTime = -1L
-                                timer = 0L
-
-                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-
-                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                                    if (location != null) {
-                                        userLocation = LatLng(location.latitude, location.longitude)
-
-                                        // Move this inside to ensure userLocation is updated before calling endTrip
-                                        viewmodel.endTrip(authUser?.email.toString(), 10.0, userLocation!!, context) { ret ->
-                                            if (ret) {
-                                                hasTrip = false
-
-                                                navController.navigate(Screens.Camera.route)
-                                            }
-                                        }
-                                    } else {
-                                        Log.e("LocationError", "Failed to get location")
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 16.dp)
-                                .offset(y = (-16).dp)
-                                .background(
-                                    color = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1),
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                        16.dp
-                                    )
-                                ),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1) // Match image color
-                            )
-                        ) {
-                            Text(
-                                text = "Finish Trip",
-                                color = Color(0xFF321F12),
-                                fontSize = 18.sp,
-                            )
                         }
                     }
                 }
@@ -916,14 +968,55 @@ fun ShakeDetector(
     }
 }
 
+// Utility function to handle different types of distance (Long, Int, Double, etc.)
+fun convertToDouble(value: Any?): Double {
+    return when (value) {
+        is Double -> value
+        is Long -> value.toDouble()
+        is Int -> value.toDouble()
+        else -> 0.0  // Default to 0.0 if the type is unknown or null
+    }
+}
+
 @Composable
 fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm: BroomViewModel, hasTrip: Boolean, curse: Boolean, offsetCurse: Dp) {
+    // Define marker locations close to the user's location
+    val markerLocations = remember { mutableStateOf<List<Broom>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+
+        val db: FirebaseDatabase = FirebaseDatabase.getInstance()
+        val broomRef = db.getReference("Brooms")
+
+        broomRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                // Collect all users from the snapshot
+                val broomsList = mutableListOf<Broom>()
+                for (child in snapshot.children) {
+                    val broom = Broom(
+                        name = child.child("Name").value as String,
+                        category = child.child("Category").value as String,
+                        distance = (child.child("Distance").value as Long).toDouble(),
+                        price = convertToDouble(child.child("Price").value),
+                        latitude = convertToDouble(child.child("Latitude").value),
+                        longitude = convertToDouble(child.child("Longitude").value),
+                        available = child.child("Available").value as Boolean
+                    )
+                    broomsList.add(broom)
+                }
+
+                // Update the state variable with the collected user list
+                markerLocations.value = broomsList
+            }
+            override fun onCancelled(error: DatabaseError) {
+                Log.d("Magic", "Error fetching magic: ${error.message}")
+            }
+        })
+    }
+
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(userLocation, 17f)
     }
-
-    // Define marker locations close to the user's location
-    val markerLocations = remember { mutableStateOf(listOf<Broom>()) }
 
     val context = LocalContext.current
 
@@ -952,30 +1045,30 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm:
                 )
             }
 
+            // Fetch brooms when userLocation changes
             LaunchedEffect(userLocation) {
                 broomVm.getBrooms { broomList ->
                     if (broomList != null) {
-                        // Update markerLocations with LatLng for each broom
-                        markerLocations.value = broomList.map { broom ->
-                            broom
-                        }
+                        markerLocations.value = broomList
                     } else {
                         println("No brooms found or an error occurred.")
                     }
                 }
             }
 
-            markerLocations.value.forEach { broom ->
-                if (broom.available) {
-                    Marker(
-                        state = MarkerState(position = LatLng(broom.latitude, broom.longitude)),
-                        icon = customIcon,
-                        title = "Custom Marker",
-                        onClick = {
-                            onMarkerClick(broom)
-                            true
-                        }
-                    )
+            if (!hasTrip) {
+                markerLocations.value.forEach { broom ->
+                    if (broom.available) {
+                        Marker(
+                            state = MarkerState(position = LatLng(broom.latitude, broom.longitude)),
+                            icon = customIcon,
+                            title = "Custom Marker",
+                            onClick = {
+                                onMarkerClick(broom)
+                                true
+                            }
+                        )
+                    }
                 }
             }
         }
