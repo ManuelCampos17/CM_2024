@@ -23,7 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.hogwartshoppers.model.Broom
+import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 import java.io.File
@@ -32,6 +35,9 @@ import java.util.concurrent.Executors
 
 @Composable
 fun CameraScreen(navController: NavController) {
+
+    val broomViewModel: BroomViewModel = viewModel()
+    
     val auth = FirebaseAuth.getInstance()
     val authUser = auth.currentUser
 
@@ -79,7 +85,7 @@ fun CameraScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = { imageCapture?.let { takePhoto(navController, it, context) } }) {
+        Button(onClick = { imageCapture?.let { takePhoto(navController,broomViewModel,authUser?.email.toString(), it, context) } }) {
             Text("Capture")
         }
     }
@@ -113,7 +119,7 @@ private fun startCamera(previewView: PreviewView, context: Context, onImageCaptu
     }, ContextCompat.getMainExecutor(context))
 }
 
-private fun takePhoto(navController: NavController, imageCapture: ImageCapture, context: Context) {
+private fun takePhoto(navController: NavController,broomViewModel: BroomViewModel, userMail: String, imageCapture: ImageCapture, context: Context) {
     val photoFile = File(context.externalMediaDirs.first(), "${System.currentTimeMillis()}.jpg")
 
     val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
@@ -121,7 +127,7 @@ private fun takePhoto(navController: NavController, imageCapture: ImageCapture, 
         outputOptions, ContextCompat.getMainExecutor(context),
         object : ImageCapture.OnImageSavedCallback {
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                uploadToFirebase(photoFile)
+                uploadToFirebase(photoFile,userMail,broomViewModel)
 
                 val savedUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.buildUpon()
                     .appendPath(photoFile.name).build()
@@ -137,11 +143,15 @@ private fun takePhoto(navController: NavController, imageCapture: ImageCapture, 
     )
 }
 
-private fun uploadToFirebase(photoFile: File) {
+private fun uploadToFirebase(photoFile: File,userMail: String, broomViewModel: BroomViewModel) {
+    
     val storage = FirebaseStorage.getInstance()
     val storageRef = storage.reference
-
-    val imageRef = storageRef.child("broom/${System.currentTimeMillis()}.jpg")
+    
+    val name = System.currentTimeMillis() // nome da foto para guardar
+    
+    val imageRef = storageRef.child("broom/${name}.jpg")
+    broomViewModel.updateTripPic(userMail,name.toString())
 
     val uploadTask = imageRef.putFile(Uri.fromFile(photoFile))
 

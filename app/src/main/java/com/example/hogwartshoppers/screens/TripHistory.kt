@@ -1,5 +1,6 @@
 package com.example.hogwartshoppers.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -52,12 +53,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.model.BroomTrip
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 
 @Composable
@@ -264,6 +267,21 @@ fun TripHistoryScreen(navController: NavController) {
 @Composable
 fun TripHistoryBox(userEmail: String, broomTrip: BroomTrip) {
     broomTrip?.let { trip ->
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference.child("broom/${trip.pic}.jpg")
+
+        // Remember the image URL state
+        var imageUrl by remember { mutableStateOf<String?>(null) }
+
+        // Fetch the image URL
+        LaunchedEffect(trip.pic) {
+            storageRef.downloadUrl.addOnSuccessListener { uri ->
+                imageUrl = uri.toString()
+            }.addOnFailureListener { exception ->
+                Log.e("Firebase", "Failed to fetch image URL: ${exception.message}")
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -283,15 +301,28 @@ fun TripHistoryBox(userEmail: String, broomTrip: BroomTrip) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Circular image
-                    Image(
-                        painter = painterResource(id = R.drawable.default_ahh),
-                        contentDescription = "Trip Placeholder",
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, Color(0xff321f12), CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
+                    if (imageUrl != null) {
+                        Image(
+                            painter = rememberAsyncImagePainter(imageUrl),
+                            contentDescription = "Trip Image",
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, Color(0xff321f12), CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // Placeholder while the image is loading
+                        Image(
+                            painter = painterResource(id = R.drawable.default_ahh),
+                            contentDescription = "Placeholder",
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, Color(0xff321f12), CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
 
                     Spacer(modifier = Modifier.width(16.dp))
 
@@ -330,6 +361,7 @@ fun TripHistoryBox(userEmail: String, broomTrip: BroomTrip) {
         }
     }
 }
+
 
 @Composable
 fun AttributeRow(title: String, value: String) {

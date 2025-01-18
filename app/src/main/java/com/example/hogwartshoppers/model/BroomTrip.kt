@@ -12,5 +12,6 @@ data class BroomTrip(
     val price: Double,
     val active: Boolean,
     val size: String,
-    val charms: String
+    val charms: String,
+    val pic: String
 )

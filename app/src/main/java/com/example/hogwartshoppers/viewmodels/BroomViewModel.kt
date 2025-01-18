@@ -229,7 +229,8 @@ class BroomViewModel: ViewModel() {
                 price = 0.0,
                 active = true,
                 size = "Medium",
-                charms = "None"
+                charms = "None",
+                pic = ""
             )
 
             // Save the new BroomTrip to the database
@@ -362,6 +363,24 @@ class BroomViewModel: ViewModel() {
             }
     }
 
+    // update the picture of the trip
+    fun updateTripPic(userEmail: String, picId: String) {
+        val userKey = userEmail.replace(".", "|") // Convert email to valid database key
+        tripsRef.child(userKey)
+            .orderByKey()
+            .limitToLast(1) // Fetch the most recent trip
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val lastId = snapshot.children.firstOrNull()?.key
+                if (lastId != null) {
+                    // Reference to the last trip
+                    val tripRef = tripsRef.child(userKey).child(lastId)
+                    // Update the price field
+                    tripRef.child("pic").setValue(picId)
+                }
+            }
+    }
+
     // funcao para dar get das trips de um user
     fun getTrips(userEmail: String, callback: (List<BroomTrip>?) -> Unit) {
         tripsRef.child(userEmail.replace(".", "|")).get().addOnSuccessListener { snapshot ->
@@ -383,7 +402,8 @@ class BroomViewModel: ViewModel() {
                     price = convertToDouble(trips.child("price").value),
                     active = trips.child("active").value as? Boolean ?: false,
                     size = trips.child("size").value as? String ?: "",
-                    charms = trips.child("charms").value as? String ?: ""
+                    charms = trips.child("charms").value as? String ?: "",
+                    pic = trips.child("pic").value as? String ?: ""
                 )
                 // Add the mapped trip to the list
                 broomTripList.add(broomTrip)
@@ -443,7 +463,8 @@ class BroomViewModel: ViewModel() {
                             price = convertToDouble(tripSnapshot.child("price").value),
                             active = tripSnapshot.child("active").value as? Boolean ?: false,
                             size = tripSnapshot.child("size").value as? String ?: "",
-                            charms = tripSnapshot.child("charms").value as? String ?: ""
+                            charms = tripSnapshot.child("charms").value as? String ?: "",
+                            pic = tripSnapshot.child("pic").value as? String ?: ""
                         )
                         callback(broomTrip)
                     }.addOnFailureListener {
