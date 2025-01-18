@@ -75,6 +75,10 @@ import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -85,7 +89,9 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
 
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
+
     var allUsers by remember { mutableStateOf<List<User>?>(null) }
+
     var friendsEmails by remember { mutableStateOf<List<String>?>(null) }
     var friendRequests by remember { mutableStateOf<List<String>?>(null) }
     var emailInput by remember { mutableStateOf("") }
@@ -95,6 +101,39 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
 
 
     LaunchedEffect(authUser?.email.toString()) {
+        // Testar interacao dinamica (real time)
+        val db: FirebaseDatabase = FirebaseDatabase.getInstance()
+        val usersRef = db.getReference("Users")
+
+        usersRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                // Collect all users from the snapshot
+                val usersList = mutableListOf<User>()
+                for (child in snapshot.children) {
+                    val user = User(
+                        username = child.child("username").value as? String ?: "",
+                        email = child.child("email").value as? String ?: "",
+                        name = child.child("name").value as? String ?: "",
+                        house = child.child("house").value as? String ?: "",
+                        distance = when (val distanceValue = child.child("distance").value) {
+                            is Long -> distanceValue.toDouble()  // Convert Long to Double
+                            is Double -> distanceValue          // Keep Double as is
+                            else -> 0.0                         // Default value
+                        },
+                        records = (child.child("records").value as? Long)?.toInt() ?: 0,
+                        flying = child.child("flying").value as? Boolean ?: false
+                    )
+                    usersList.add(user)
+                }
+                // Update the state variable with the collected user list
+                allUsers = usersList
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.d("User", "Error fetching Users: ${error.message}")
+            }
+        })
+
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
@@ -324,9 +363,13 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                                     // Using count
                                     friendsEmails?.let {
                                         items(it.size) { index ->
+                                            val user = allUsers?.find { user -> user.email == it[index] } // Find the user in allUsers
+                                            val isFlying = user?.flying ?: false // Get the flying status or default to false
+
                                             FriendBox(
                                                 userEmail =authUser?.email.toString(),
                                                 email = it[index],
+                                                isFlying = isFlying,
                                                 navController = navController
                                             )
                                         }
@@ -505,7 +548,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
 }
 
 @Composable
-fun FriendBox(userEmail: String,email: String, navController: NavController, broomViewModel: BroomViewModel = viewModel()) {
+fun FriendBox(userEmail: String,email: String, isFlying: Boolean, navController: NavController, broomViewModel: BroomViewModel = viewModel()) {
     val userViewModel: UserViewModel = viewModel()
     var friend by remember { mutableStateOf<User?>(null) }
 
@@ -677,36 +720,38 @@ fun FriendBox(userEmail: String,email: String, navController: NavController, bro
                     }
                 }
 
-                Button(
-                    onClick = {
-                        // Your button action here
-                    },
-                    modifier = Modifier
-                        .padding(top = 5.dp)
-                        .fillMaxWidth(), // Button will take up full width of its parent
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), // Make button's background transparent
-                    shape = RoundedCornerShape(16.dp) // Apply rounded corners to the button
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize() // Ensure the box takes up full size of the button
+                if(isFlying) {
+                    Button(
+                        onClick = {
+                            userViewModel.curseUser(email)
+                        },
+                        modifier = Modifier
+                            .padding(top = 5.dp)
+                            .fillMaxWidth(), // Button will take up full width of its parent
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), // Make button's background transparent
+                        shape = RoundedCornerShape(16.dp) // Apply rounded corners to the button
                     ) {
-                        // Image as background with RoundedCorners
-                        Image(
-                            painter = painterResource(id = R.drawable.curse_texture), // Replace with your image resource
-                            contentDescription = "Button Background",
-                            modifier = Modifier
-                                .fillMaxSize() // Ensure image covers the button area
-                                .clip(RoundedCornerShape(16.dp)) // Apply rounded corners to the image
-                                .background(Color.Gray), // Optional: add a background if desired
-                            contentScale = ContentScale.Crop // Adjust how the image is scaled
-                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize() // Ensure the box takes up full size of the button
+                        ) {
+                            // Image as background with RoundedCorners
+                            Image(
+                                painter = painterResource(id = R.drawable.curse_texture), // Replace with your image resource
+                                contentDescription = "Button Background",
+                                modifier = Modifier
+                                    .fillMaxSize() // Ensure image covers the button area
+                                    .clip(RoundedCornerShape(16.dp)) // Apply rounded corners to the image
+                                    .background(Color.Gray), // Optional: add a background if desired
+                                contentScale = ContentScale.Crop // Adjust how the image is scaled
+                            )
 
-                        // Text inside button (centered)
-                        Text(
-                            text = "Curse",
-                            color = Color.White,
-                            modifier = Modifier.align(Alignment.Center) // Center the text inside the button
-                        )
+                            // Text inside button (centered)
+                            Text(
+                                text = "Curse",
+                                color = Color.White,
+                                modifier = Modifier.align(Alignment.Center) // Center the text inside the button
+                            )
+                        }
                     }
                 }
 

@@ -87,8 +87,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Login(navController: NavController) {
-    val userViewModel: UserViewModel = viewModel()
-
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 

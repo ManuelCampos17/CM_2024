@@ -44,6 +44,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.hogwartshoppers.model.Broom
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.model.BroomTrip
 import com.google.android.gms.maps.model.LatLng
@@ -69,6 +70,7 @@ class BroomViewModel: ViewModel() {
     private val db: FirebaseDatabase = FirebaseDatabase.getInstance()
     val broomsRef = db.reference.child("Brooms")
     val tripsRef = db.reference.child("Trips")
+    val usersRef = db.reference.child("Users")
 
     var broomUiState: BroomUIState by mutableStateOf(BroomUIState.Loading)
         private set
@@ -211,6 +213,7 @@ class BroomViewModel: ViewModel() {
 
     // comecar uma viagem
     fun startTrip(userEmail: String, broomName: String) {
+
         // Generate a unique rentalId for this new trip
         val rentalId = tripsRef.child(userEmail.replace(".", "|")).push().key
 
@@ -233,6 +236,7 @@ class BroomViewModel: ViewModel() {
             tripsRef.child(userEmail.replace(".", "|")).child(it).setValue(broomTrip)
 
             updateAvailable(broomName,false)
+            updateUserFlying(userEmail,true)
         }
     }
 
@@ -297,6 +301,7 @@ class BroomViewModel: ViewModel() {
                                 )
 
                                 updateLocation(broom.name, userLoc.latitude, userLoc.longitude)
+                                updateUserFlying(userEmail,false)
 
                                 // Update the last trip with the new data
                                 tripRef.updateChildren(updatedTrip)
@@ -451,6 +456,25 @@ class BroomViewModel: ViewModel() {
             .addOnFailureListener {
                 callback(null)
             }
+    }
+
+    // função para atualizar se o user está a voar
+    fun updateUserFlying(email: String, isFlying: Boolean) {
+        // Query the database to find the user with the matching email
+        usersRef.orderByChild("email").equalTo(email).get().addOnSuccessListener { snapshot ->
+            if (snapshot.exists()) {
+                for (userSnapshot in snapshot.children) {
+                    // Update the username for the matching user
+                    userSnapshot.ref.child("flying").setValue(isFlying)
+                }
+            } else {
+                // Handle case where no user is found with the provided email
+                Log.e("Firebase", "No user found with email: $email")
+            }
+        }.addOnFailureListener { exception ->
+            // Handle any errors that occur while querying the database
+            Log.e("Firebase", "Error querying user: ${exception.message}")
+        }
     }
 
     // Example helper functions:

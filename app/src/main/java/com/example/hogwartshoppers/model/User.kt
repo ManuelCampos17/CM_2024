@@ -9,5 +9,6 @@ data class User(
     val name: String,
     val house: String,
     val distance: Double,
-    val records: Int
+    val records: Int,
+    val flying: Boolean
 )

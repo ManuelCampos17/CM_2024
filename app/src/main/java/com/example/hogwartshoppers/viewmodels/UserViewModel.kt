@@ -55,7 +55,8 @@ class UserViewModel: ViewModel(){
                                 is Double -> distanceValue          // If it's already a Double, keep it
                                 else -> 0.0
                             },
-                            records = (it.child("records").value as Long).toInt()
+                            records = (it.child("records").value as Long).toInt(),
+                            flying = it.child("flying").value as? Boolean ?: false
                         )
                         callback(user) // Return the mapped user object
                     } ?:callback(null)
@@ -88,7 +89,8 @@ class UserViewModel: ViewModel(){
                     name = "",
                     house = "",
                     distance = 0.0,
-                    records = 0
+                    records = 0,
+                    flying = false
                 )
                 usersRef.push().setValue(user)
                     .addOnSuccessListener { callback(true) } // User created successfully
