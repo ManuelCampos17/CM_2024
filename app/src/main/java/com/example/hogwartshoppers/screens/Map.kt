@@ -1,7 +1,6 @@
 package com.example.hogwartshoppers.screens
 
 import android.Manifest
-import android.R.attr.shape
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -11,9 +10,9 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
+import android.media.MediaPlayer
 import android.util.Log
 import android.widget.ImageButton
-import android.widget.Space
 import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
@@ -46,7 +45,6 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
@@ -55,25 +53,19 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
-import androidx.core.graphics.rotationMatrix
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.android.gms.location.LocationServices
@@ -87,6 +79,7 @@ import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.model.Broom
 import com.example.hogwartshoppers.model.BroomTrip
 import com.example.hogwartshoppers.model.User
+import com.example.hogwartshoppers.viewmodels.AudioViewModel
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.gms.maps.model.BitmapDescriptor
@@ -99,10 +92,6 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import kotlin.math.abs
 
 @Composable
 fun MapScreen(navController: NavController) {
@@ -580,6 +569,70 @@ fun MapScreen(navController: NavController) {
                                 fontSize = 18.sp,
                             )
                         }
+                    }
+
+                    //AUDIOPLAYER
+                    val audioViewModel = AudioViewModel()
+                    var url by remember { mutableStateOf<String?>(null) }
+                    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+                    var isPlaying by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(Unit) {
+                        url = currTrip?.let { audioViewModel.fetchAudioFile(it.broomName) }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.Top
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            if (url != null) {
+                                Button(
+                                    onClick = {
+                                        if (isPlaying) {
+                                            mediaPlayer?.pause()
+                                            isPlaying = false
+                                        } else {
+                                            if (mediaPlayer == null) {
+                                                mediaPlayer = MediaPlayer().apply {
+                                                    setOnErrorListener { mp, what, extra ->
+                                                        Log.e("MediaPlayer", "Error occurred: what=$what extra=$extra")
+                                                        true
+                                                    }
+                                                    setOnCompletionListener {
+                                                        // Reset state when audio finishes
+                                                        isPlaying = false
+                                                        Log.e("MediaPlayer", "Playback completed")
+                                                    }
+                                                    setDataSource(url)
+                                                    prepareAsync()
+                                                    setOnPreparedListener {
+                                                        start()
+                                                        isPlaying = true
+                                                    }
+                                                }
+                                            } else {
+                                                mediaPlayer?.start()
+                                                isPlaying = true
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.align(Alignment.TopEnd),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xff321f12),
+                                    )
+                                ) {
+                                    Text(text = if (isPlaying) "Pause Broom Lore" else "Play Broom Lore")
+                                }
+                            } else {
+                                Log.e("AudioViewModel", "No URL found for broomName: ${currTrip?.broomName}")
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
                     if (curse) {
