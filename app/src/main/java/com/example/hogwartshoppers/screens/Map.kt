@@ -15,6 +15,10 @@ import android.util.Log
 import android.widget.ImageButton
 import android.widget.Space
 import android.widget.Toast
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,12 +59,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -107,6 +113,45 @@ fun MapScreen(navController: NavController) {
     var currUser by remember { mutableStateOf<User?>(null) }
 
     var curse by remember { mutableStateOf(false) }
+
+    // Pulsing Box logic here
+    var sizeState by remember { mutableStateOf(true) }
+    // State to control the offset of the shaking Box
+    var offsetCurse by remember { mutableStateOf(0.dp) }
+
+    val size by animateDpAsState(
+        targetValue = if (sizeState) 415.dp else 375.dp,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 1000,
+                easing = LinearEasing
+            )
+        )
+    )
+
+    // Toggles the size every second
+    LaunchedEffect(curse) {
+        while (curse) {
+            delay(1000)
+            sizeState = !sizeState
+        }
+    }
+
+    // Shake logic: this LaunchedEffect will trigger when 'curse' is true
+    LaunchedEffect(curse) {
+        if (curse) {
+            // Shake the box repeatedly by changing the offset
+            // Use a `while` loop but respect the `curse` value toggling
+            while (curse) {
+                delay(100)
+                offsetCurse = 5.dp
+                delay(100)
+                offsetCurse = -5.dp
+            }
+        } else {
+            offsetCurse = 0.dp // Reset offset when 'curse' is false
+        }
+    }
 
     LaunchedEffect(authUser?.email.toString()) {
 
@@ -284,7 +329,7 @@ fun MapScreen(navController: NavController) {
         Scaffold(
             floatingActionButton = {
                 Box(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize().offset(x = offsetCurse) // Apply the shake offset
                 ) {
                     ExtendedFloatingActionButton(
                         text = { Text("") },
@@ -310,7 +355,7 @@ fun MapScreen(navController: NavController) {
                         modifier = Modifier
                             .padding(start = 30.dp, top = 50.dp) // Adjust position on the screen
                             .size(60.dp), // Make the button larger for better content alignment
-                        containerColor = Color(0xff321f12), // Brown background for the button
+                        containerColor = if (curse) Color(0xff324e3b) else Color(0xff321f12), // Brown background for the button
                         contentColor = Color.White // White color for the content inside
                     )
                 }
@@ -337,7 +382,9 @@ fun MapScreen(navController: NavController) {
                                 selectedMarker = broom
                             },
                             broomVm = BroomViewModel(),
-                            hasTrip = it
+                            hasTrip = it,
+                            curse = curse,
+                            offsetCurse = offsetCurse
                         )
                     }
                 }
@@ -345,24 +392,40 @@ fun MapScreen(navController: NavController) {
                 if (curse) {
                     Box(
                         modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                            .size(size)
+                            .align(Alignment.Center),
+                        contentAlignment = Alignment.Center,
+
                     ) {
+
                         Box(
                             modifier = Modifier
-                                .background(Color.Red, shape = RoundedCornerShape(16.dp))
+                                .background(Color.Transparent, shape = RoundedCornerShape(16.dp)) // Make the background transparent
                                 .padding(16.dp)
                         ) {
+                            // Add the image behind the text but inside this box
+                            Image(
+                                painter = painterResource(id = R.drawable.death_mark),
+                                contentDescription = "Death Mark Inside Box",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(8.dp), // Optionally adjust the padding
+                                contentScale = ContentScale.Crop, // Adjust how the image scales
+                                alpha = 0.7f // Adjust the transparency of the image
+                            )
+
+                            // Text inside the Box
                             Text(
                                 text = "You are being cursed! SHAKE YOUR PHONE!",
-                                color = Color.White,
-                                fontSize = 20.sp,
+                                color = Color.Black,
+                                fontSize = 30.sp,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(16.dp).align(Alignment.Center)
                             )
                         }
                     }
+
 
                     ShakeDetector { shaken ->
                         if (shaken) {
@@ -375,64 +438,69 @@ fun MapScreen(navController: NavController) {
 
                 Box(
                     modifier = Modifier
+                        .fillMaxSize() // Fill the screen (or adjust as needed)
+                        .offset(x = offsetCurse)
+                ) {
+                    Box(modifier = Modifier
                         .align(Alignment.BottomStart)
                         .padding(
                             start = 20.dp,
                             bottom = if (hasTrip == true) 220.dp else 20.dp // Adjust position when hasTrip is true
                         )
                         .background(
-                            color = Color(0xFF4C372A),
+                            color = if (curse) Color(0xff324e3b) else Color(0xff321f12),
                             shape = RoundedCornerShape(16.dp)
                         )
                         .padding(horizontal = 20.dp, vertical = 12.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(20.dp)
-                    ) {
+                    ){
                         Row(
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_altitude),
-                                contentDescription = "Altitude Icon",
-                                tint = Color.White,
-                                modifier = Modifier.size(30.dp)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_altitude),
+                                    contentDescription = "Altitude Icon",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(30.dp)
+                                )
+
+                                Spacer(modifier = Modifier.width(10.dp))
+
+                                Text(
+                                    text = "${"%.0f".format(SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, pressure))} m",
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                )
+                            }
+
+                            Divider(
+                                modifier = Modifier
+                                    .height(30.dp)
+                                    .width(1.5.dp),
+                                color = Color.White
                             )
 
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_speedometer),
+                                    contentDescription = "Speed Icon",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(30.dp)
+                                )
 
-                            Text(
-                                text = "${"%.0f".format(SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, pressure))} m",
-                                color = Color.White,
-                                fontSize = 16.sp
-                            )
-                        }
+                                Spacer(modifier = Modifier.width(10.dp))
 
-                        Divider(
-                            modifier = Modifier
-                                .height(30.dp)
-                                .width(1.5.dp),
-                            color = Color.White
-                        )
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_speedometer),
-                                contentDescription = "Speed Icon",
-                                tint = Color.White,
-                                modifier = Modifier.size(30.dp)
-                            )
-
-                            Spacer(modifier = Modifier.width(10.dp))
-
-                            Text(
-                                text = "${"%.0f".format(smoothedSpeed)} km/h",
-                                color = Color.White,
-                                fontSize = 16.sp
-                            )
+                                Text(
+                                    text = "${"%.0f".format(smoothedSpeed)} km/h",
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                )
+                            }
                         }
                     }
                 }
@@ -638,7 +706,9 @@ fun MapScreen(navController: NavController) {
                     }
 
                     Box(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset(x = offsetCurse) // Apply the shake offset
                     ) {
                         // Background to intercept clicks
                         Box(
@@ -651,36 +721,79 @@ fun MapScreen(navController: NavController) {
                                 .align(Alignment.BottomCenter)
                                 .padding(16.dp)
                                 .background(
-                                    color = Color(0xFF321F12), // Brown background
+                                    color = if (curse) Color(0xff324e3b) else Color(0xff321f12), // Brown background
                                     shape = RoundedCornerShape(16.dp) // Rounded corners
                                 )
                                 .padding(16.dp)
                                 .fillMaxWidth()
                                 .height(160.dp)
                         ) {
-                            Column(
+                            // Broom details
+                            currTrip?.let {
+                                Text(
+                                    text = it.broomName,
+                                    color = Color.White,
+                                    fontSize = 28.sp,
+                                    modifier = Modifier
+                                        .padding(bottom = 16.dp)
+                                        .align(Alignment.TopCenter)
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .padding(top = 32.dp)
+                                    .fillMaxWidth(),
+
+                                ) {
+                                // Use Box to layer images
+                                Box(
+                                    modifier = Modifier.size(100.dp) // Size of the Box
+                                ) {
+                                    // Bottom image
+                                    Image(
+                                        painter = painterResource(id = if (curse) R.drawable.background_for_broom_curse else R.drawable.background_for_broom),
+                                        contentDescription = "Broom Image",
+                                        modifier = Modifier.fillMaxSize() // Fills the Box
+                                    )
+
+                                    // Top image
+                                    Image(
+                                        painter = painterResource(id = R.drawable.nimbus_2000), // Replace with your overlay image resource
+                                        contentDescription = "Overlay Image",
+                                        modifier = Modifier
+                                            .size(90.dp) // Adjust size of the overlay image
+                                            .align(Alignment.Center) // Center it on top of the background image
+                                    )
+                                }
+                            }
+
+                                Column(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .align(Alignment.Center),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                // Timer text
-                                Text(
-                                    text = "Timer: $formattedTime",
-                                    color = Color.White,
-                                    fontSize = 20.sp,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
 
-                                // Broom details
-                                currTrip?.let {
+                                Row(
+                                    horizontalArrangement = Arrangement.Start
+
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.time_trip),
+                                        contentDescription = "Time Trip Logo",
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .padding(start = 16.dp, end = 4.dp)
+                                            .align(Alignment.CenterVertically)
+                                    )
+
+                                    // Timer text
                                     Text(
-                                        text = it.broomName,
+                                        text = formattedTime,
                                         color = Color.White,
-                                        fontSize = 28.sp,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(top = 8.dp)
+                                        fontSize = 18.sp,
+                                        modifier = Modifier.align(Alignment.CenterVertically)
                                     )
                                 }
                             }
@@ -716,10 +829,15 @@ fun MapScreen(navController: NavController) {
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .padding(bottom = 16.dp)
-                                .height(56.dp),
-                            shape = RoundedCornerShape(16.dp),
+                                .offset(y = (-16).dp)
+                                .background(
+                                    color = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                        16.dp
+                                    )
+                                ),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFDBC7A1) // Match image color
+                                containerColor = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1) // Match image color
                             )
                         ) {
                             Text(
@@ -799,7 +917,7 @@ fun ShakeDetector(
 }
 
 @Composable
-fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm: BroomViewModel, hasTrip: Boolean) {
+fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm: BroomViewModel, hasTrip: Boolean, curse: Boolean, offsetCurse: Dp) {
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(userLocation, 17f)
     }
@@ -862,55 +980,78 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm:
             }
         }
 
-        // Location Button
-        AndroidView(
-            factory = { context ->
-                val button = ImageButton(context).apply {
-                    setImageResource(R.drawable.ic_my_location)
-                    setBackgroundResource(0) // Remove background
-
-                    // Set scale type to fit the image nicely
-                    scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
-
-                    // Handle click event
-                    setOnClickListener {
-                        if (ActivityCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.ACCESS_FINE_LOCATION
-                            ) == PackageManager.PERMISSION_GRANTED
-                        ) {
-                            try {
-                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                                    if (location != null) {
-                                        val currentLatLng = LatLng(location.latitude, location.longitude)
-                                        cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
-                                    }
-                                }
-                            } catch (e: SecurityException) {
-                                e.printStackTrace() // Log or handle the exception appropriately
-                            }
-                        } else {
-                            // Permission not granted, show an appropriate message or request permission
-                            Toast.makeText(
-                                context,
-                                "Location permission not granted. Please enable it in settings.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                }
-                button
-            },
+        // Location Button with a Box around it
+        Box(
             modifier = Modifier
-                .align(Alignment.BottomEnd) // Align to bottom-right
-                .padding(
-                    end = 5.dp,
-                    bottom = if (hasTrip) 205.dp else 5.dp
-                ) // Add padding from edges
-                .size(80.dp) // Set button size
-                .zIndex(1f) // Ensure the button is above the map
-        )
+                .fillMaxSize() // Fill the screen (or adjust as needed)
+                .padding(16.dp) // Padding around the entire Box
+                .offset(x = offsetCurse)
+        ) {
+            // Box around the button for additional styling
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd) // Align to bottom-right
+                    .padding(
+                        end = 5.dp,
+                        bottom = if (hasTrip) 205.dp else 5.dp
+                    )
+                    .size(50.dp) // Box size, bigger than the button itself
+                    .background(
+                        if (curse) Color(0xff324e3b) else Color(0xff321f12),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+            ) {
+                // Location Button inside AndroidView
+                AndroidView(
+                    factory = { context ->
+                        val button = ImageButton(context).apply {
+                            setImageResource(R.drawable.my_location)
+                            setBackgroundResource(0) // Remove background
+                            scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+
+                            // Handle click event
+                            setOnClickListener {
+                                if (ActivityCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.ACCESS_FINE_LOCATION
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    try {
+                                        val fusedLocationClient =
+                                            LocationServices.getFusedLocationProviderClient(context)
+                                        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                            if (location != null) {
+                                                val currentLatLng =
+                                                    LatLng(location.latitude, location.longitude)
+                                                cameraPositionState.move(
+                                                    CameraUpdateFactory.newLatLngZoom(
+                                                        currentLatLng,
+                                                        15f
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    } catch (e: SecurityException) {
+                                        e.printStackTrace() // Log or handle the exception appropriately
+                                    }
+                                } else {
+                                    // Permission not granted, show an appropriate message or request permission
+                                    Toast.makeText(
+                                        context,
+                                        "Location permission not granted. Please enable it in settings.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                        button
+                    },
+                    modifier = Modifier
+                        .align(Alignment.Center) // Center the button inside the box
+                        .zIndex(1f) // Ensure the button stays above the map
+                )
+            }
+        }
     }
 }
 
