@@ -26,14 +26,9 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,26 +39,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hogwartshoppers.R
-import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
-import kotlinx.coroutines.NonCancellable.start
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -286,10 +279,33 @@ fun Race(navController: NavController, friendEmail: String) {
                                     .background(Color(0xFFBB9753), shape = RoundedCornerShape(16.dp)),
                                 contentAlignment = Alignment.Center  // Centers the text inside the square
                             ) {
-                                Text(
-                                    text = "Map with Finish Line",
-                                    color = Color.White,  // Text color
+                                val cameraPositionState = rememberCameraPositionState()
+                                val markerPosition = LatLng(38.757969, -9.155979)
+
+                                cameraPositionState.move(
+                                    CameraUpdateFactory.newLatLngZoom(
+                                        markerPosition,
+                                        16f
+                                    )
                                 )
+
+                                GoogleMap(
+                                    cameraPositionState = cameraPositionState,
+                                    uiSettings = remember {
+                                        com.google.maps.android.compose.MapUiSettings(
+                                            zoomControlsEnabled = true,
+                                            compassEnabled = true
+                                        )
+                                    },
+                                    properties = remember {
+                                        com.google.maps.android.compose.MapProperties(isMyLocationEnabled = true)
+                                    },
+                                    modifier = Modifier.matchParentSize()
+                                ) {
+                                    Marker(
+                                        state = rememberMarkerState(position = markerPosition)
+                                    )
+                                }
                             }
 
                             Spacer(modifier = Modifier.height(5.dp))
