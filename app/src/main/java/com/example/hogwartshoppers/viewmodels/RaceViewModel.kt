@@ -1,5 +1,6 @@
 package com.example.hogwartshoppers.viewmodels
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -39,8 +40,8 @@ class RaceViewModel: ViewModel() {
                     userRace = race.child("userRace").value as String,
                     friendRace = race.child("friendRace").value as String,
                     finished = race.child("finished").value as Boolean,
-                    latitude = race.child("latitude").value as Double,
-                    longitude = race.child("longitude").value as Double,
+                    latitude = convertToDouble(race.child("latitude").value),
+                    longitude = convertToDouble(race.child("longitude").value),
                     time = race.child("time").value as Long,
                     invite = race.child("invite").value as Boolean?
                 )
@@ -57,8 +58,8 @@ class RaceViewModel: ViewModel() {
                 it.child("name").value == name
             }
             if (finishCoords != null) {
-                val latitude = finishCoords.child("latitude").value as Double
-                val longitude = finishCoords.child("longitude").value as Double
+                val latitude = convertToDouble(finishCoords.child("latitude").value)
+                val longitude = convertToDouble(finishCoords.child("longitude").value)
                 callback(Pair(latitude, longitude))
             }
             else {
@@ -115,6 +116,31 @@ class RaceViewModel: ViewModel() {
         }
     }
 
+    fun updateCoordsRace(user: String, friend: String, latitude: Double, longitude: Double, callback: (Boolean) -> Unit) {
+        racesRef.get().addOnSuccessListener { snapshot ->
+            val race = snapshot.children.find {
+                it.child("userRace").value == user && it.child("friendRace").value == friend
+            }
+            if (race != null) {
+                race.ref.child("latitude").setValue(latitude)
+                race.ref.child("longitude").setValue(longitude)
+                Log.d("updateCoordsRace", "Latitude: $latitude, Longitude: $longitude")
+                Log.d("race lat and long", "${race.child("latitude").value} ${race.child("longitude").value}")
+                callback(true)
+            } else {
+                callback(false)
+            }
+        }
+    }
 
+    // Utility function to handle different types of distance (Long, Int, Double, etc.)
+    fun convertToDouble(value: Any?): Double {
+        return when (value) {
+            is Double -> value
+            is Long -> value.toDouble()
+            is Int -> value.toDouble()
+            else -> 0.0  // Default to 0.0 if the type is unknown or null
+        }
+    }
 }
 

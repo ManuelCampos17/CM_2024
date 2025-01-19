@@ -1,5 +1,7 @@
 package com.example.hogwartshoppers.screens
 
+import android.R.attr.maxLines
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,8 +20,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -60,8 +64,10 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.hogwartshoppers.model.Race
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.RaceViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
@@ -79,6 +85,8 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
     var currUser by remember { mutableStateOf<User?>(null) }
     var friend by remember { mutableStateOf<User?>(null) }
     var showPopup by remember { mutableStateOf(false) }
+    var race by remember { mutableStateOf<Race?>(null) }
+    var finishLine by remember { mutableStateOf("") }
 
     LaunchedEffect(authUser?.email.toString()) {
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
@@ -99,6 +107,10 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                         )
                 )
             }
+        }
+
+        raceViewModel.getRace(authUser?.email.toString(), friendEmail) {
+            race = it
         }
     }
 
@@ -196,6 +208,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                     .background(Color(0xff321f12))
                     .border(3.dp, Color(0xFFBB9753))
                     .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.hogwartslogo),
@@ -210,7 +223,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
-                        .padding(top = 80.dp),
+                        .padding(top = 150.dp),
                     verticalArrangement = Arrangement.Center
                 ) {
                     Box(
@@ -234,7 +247,8 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
 
                     Column(
                         modifier = Modifier
-                            .size(350.dp, 500.dp)
+                            .width(350.dp)
+                            .fillMaxHeight()
                             .background(
                                 Color(0xffe9dbc0),
                                 shape = RoundedCornerShape(16.dp)
@@ -274,6 +288,10 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                             Text("Select finish line")
                         }
 
+                        if(finishLine != "")
+                            Text(text = "Selected finish line: $finishLine",
+                                color = Color(0xff4b2f1b),)
+
 
                         Row(
                             modifier = Modifier
@@ -293,14 +311,21 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                                         .clip(CircleShape) // Make the image circular
                                         .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
                                 )
-                                Text(text = "${currUser?.username}", fontSize = 12.sp, color = Color.Black) // First text
+                                Text(text = "${currUser?.username}",
+                                    fontSize = 12.sp,
+                                    color = Color.Black,
+                                    maxLines = 1, // Set the max number of lines for the text
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
 
                             // Second image: "vs"
                             Image(
                                 painter = painterResource(id = R.drawable.vs), // Replace with your drawable resource
                                 contentDescription = "VS",
-                                modifier = Modifier.size(75.dp) // Adjust size as needed
+                                modifier = Modifier.size(75.dp)
+                                    .align(Alignment.CenterVertically)
+                                    .padding(start = 16.dp)
                             )
 
                             // Second Image with texts below
@@ -314,7 +339,12 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                                         .clip(CircleShape) // Make the image circular
                                         .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
                                 )
-                                Text(text = "${friend?.username}", fontSize = 12.sp, color = Color.Black) // First text
+                                Text(text = "${friend?.username}",
+                                    fontSize = 12.sp,
+                                    color = Color.Black,
+                                    maxLines = 1, // Set the max number of lines for the text
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
                         }
 
@@ -348,7 +378,9 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                                 containerColor = Color(0xff44ba3c)
                             )
                         ) {
-                            Text("Start race against ${friend?.username}")
+                            Text(text = "Start race against ${friend?.username}",
+                                maxLines = 1, // Set the max number of lines for the text
+                                overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }
@@ -376,7 +408,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                                 .wrapContentSize(),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            val finishLines = listOf("Quidditch Pitch", "Forbidden Forest", "Hogsmeade","rofess","babaribubari")
+                            val finishLines = listOf("Quidditch Pitch", "Forbidden Forest", "Hogsmeade Station","Hogwarts Castle")
 
                             Text(text ="Select one of the following:",
                                 color = Color.White,
@@ -394,8 +426,24 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                                 items(finishLines.size) { line ->
                                     Button(
                                         onClick = {
-                                            // Handle finish line selection
-                                            println("Selected: $line")
+                                            var latitude = 0.0
+                                            var longitude = 0.0
+                                            raceViewModel.getFinishCoords(finishLines[line]) {
+                                                if (it != null) {
+                                                    latitude = it.first
+                                                    longitude = it.second
+                                                }
+                                                Log.d("latitute", latitude.toString())
+                                                Log.d("longitude", longitude.toString())
+                                                raceViewModel.updateCoordsRace(user = authUser?.email.toString(),friendEmail, latitude, longitude) {
+                                                    if(!it)
+                                                        Log.d("Error", "Error updating coords")
+                                                    else
+                                                        Log.d("Success", "Coords updated")
+                                                        finishLine = finishLines[line]
+
+                                                }
+                                            }
                                             showPopup = false // Close popup after selection
                                         },
                                         modifier = Modifier.fillMaxWidth(),
