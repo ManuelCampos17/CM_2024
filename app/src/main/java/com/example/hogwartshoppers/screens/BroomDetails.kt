@@ -218,7 +218,7 @@ fun BroomDetailsScreen(navController: NavController, selectedBroomName: String) 
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     ) {
                         DetailItem(
-                            label = selectedBroom?.distance.toString() + " km",
+                            label = selectedBroom?.distance.toString() + " m",
                             imageRes = R.drawable.km_details,
                             imageSize = 100.dp,
                             fontSize = 18.sp,

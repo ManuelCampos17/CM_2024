@@ -269,7 +269,7 @@ fun ProfileScreen(navController: NavController, userMail: String) {
                                             fontSize = 14.sp
                                         )
                                         Text(
-                                            text = currUser?.distance.toString() + " km",
+                                            text = String.format("%.1f", currUser?.distance ?: 0.0) + " m",
                                             color = Color.White,
                                             fontSize = 16.sp
                                         )

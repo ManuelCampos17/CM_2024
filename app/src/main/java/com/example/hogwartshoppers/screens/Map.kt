@@ -406,7 +406,9 @@ fun MapScreen(navController: NavController) {
                         mutableStateOf(sharedPreferences.getLong("startTime", -1L))
                     }
                     var timer by remember { mutableStateOf(0L) }
-                    var totalDistance by remember { mutableStateOf(0.0) } // Total distance in meters
+                    var totalDistance by remember {
+                        mutableStateOf(sharedPreferences.getFloat("totalDistance", 0f).toDouble())
+                    }
                     var previousLocation: LatLng? by remember { mutableStateOf(null) }
                     val coroutineScope = rememberCoroutineScope()
 
@@ -419,6 +421,8 @@ fun MapScreen(navController: NavController) {
                                     val currentLocation = LatLng(location.latitude, location.longitude)
                                     if (previousLocation != null) {
                                         totalDistance += calculateDistance(previousLocation!!, currentLocation)
+
+                                        editor.putFloat("totalDistance", totalDistance.toFloat()).apply()
                                     }
                                     previousLocation = currentLocation
                                 }
@@ -569,11 +573,6 @@ fun MapScreen(navController: NavController) {
                         // Finish Trip button
                         Button(
                             onClick = {
-                                // Clear the start time and reset the timer
-                                editor.remove("startTime").apply()
-                                startTime = -1L
-                                timer = 0L
-                                previousLocation = null
 
                                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
@@ -586,7 +585,14 @@ fun MapScreen(navController: NavController) {
                                             if (ret) {
                                                 hasTrip = false
 
+                                                // Clear the start time and reset the timer
+                                                editor.remove("startTime").apply()
+                                                startTime = -1L
+                                                timer = 0L
+
                                                 totalDistance = 0.0
+                                                previousLocation = null
+                                                editor.putFloat("totalDistance", 0f).apply()
 
                                                 navController.navigate(Screens.Camera.route)
                                             }
@@ -758,6 +764,7 @@ fun MapScreen(navController: NavController) {
 
                                                                 previousLocation = null
                                                                 totalDistance = 0.0
+                                                                editor.putFloat("totalDistance", 0f).apply()
                                                             }
                                                         }
                                                     } else {
@@ -956,16 +963,16 @@ fun MapScreen(navController: NavController) {
                                         modifier = Modifier.offset(y = (-12).dp)
                                     ) {
                                         Image(
-                                            painter = painterResource(id = R.drawable.km_logo),
-                                            contentDescription = "KM Logo",
+                                            painter = painterResource(id = R.drawable.m_logo),
+                                            contentDescription = "Mm Logo",
                                             modifier = Modifier
                                                 .size(48.dp)
-                                                .padding(start = 16.dp, end = 4.dp)
+                                                .padding(start = 25.dp, end = 4.dp)
                                                 .align(Alignment.CenterVertically)
                                         )
 
                                         Text(
-                                            text = broom.distance.toString() + " km",
+                                            text = broom.distance.toString() + " m",
                                             color = Color.White,
                                             fontSize = 18.sp,
                                             modifier = Modifier.align(Alignment.CenterVertically)

@@ -349,10 +349,10 @@ fun TripHistoryBox(userEmail: String, broomTrip: BroomTrip) {
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AttributeRow(title = "Distance:", value = "${trip.distance} km")
+                    AttributeRow(title = "Distance:", value = "${String.format("%.1f", trip.distance ?: 0.0)} m")
                     AttributeRow(title = "Date:", value = trip.date)
                     AttributeRow(title = "Time:", value = trip.time)
-                    AttributeRow(title = "Price:", value = "$${trip.price}")
+                    AttributeRow(title = "Price:", value = "$${String.format("%.1f", trip.price ?: 0.0)}")
                     AttributeRow(title = "Active:", value = if (trip.active) "Yes" else "No")
                     AttributeRow(title = "Size:", value = trip.size)
                     AttributeRow(title = "Charms:", value = trip.charms)
