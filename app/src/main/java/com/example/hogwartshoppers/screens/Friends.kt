@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,9 +22,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -246,6 +250,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                     .background(Color(0xff321f12))
                     .border(3.dp, Color(0xFFBB9753))
                     .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.hogwartslogo),
@@ -266,8 +271,8 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .size(350.dp, 70.dp) // Set specific width and height
-                            .padding(bottom = 30.dp)
+                            .padding(bottom = 16.dp)
+                            .size(350.dp, 50.dp) // Set specific width and height
                             .background(
                                 color = Color(0xff4b2f1b), // Brown background
                                 shape = RoundedCornerShape(16.dp) // Makes corners rounded
@@ -285,7 +290,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                     Box(
                         modifier = Modifier
                             .size(350.dp, 60.dp)
-                            .padding(bottom = 16.dp)
+                            .padding(bottom = 8.dp)
                             .background(
                                 color = Color(0xff321f12), // Background color for unselected area
                                 shape = RoundedCornerShape(16.dp)
@@ -307,7 +312,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                             onClick = { selectedTab = "My Friends" },
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .size(150.dp, 40.dp),
+                                .size(150.dp, 60.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = if (selectedTab == "My Friends") ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753))
                                     else ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b)),
@@ -339,10 +344,43 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                             }
                     }
 
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    ) {
+
+                        Button(
+                            onClick = {
+                                showDialog = true
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSent) Color.Green else Color(0xffBB9753) // Dynamic color
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(
+                                text = if (isSent) "Friend Request Sent!" else "Add Friend", // Dynamic text
+                                color = Color.White
+                            )
+                        }
+
+// Reset state after 2 seconds when `isSent` is true
+                        if (isSent) {
+                            LaunchedEffect(isSent) {
+                                kotlinx.coroutines.delay(2000) // Wait for 2 seconds
+                                isSent = false // Reset the button state
+                            }
+                        }
+
+
+                    }
+
                     // Content Box
                     Box(
                         modifier = Modifier
-                            .size(350.dp, 500.dp)
+                            .wrapContentSize()
                             .background(Color(0xff4b2f1b), shape = RoundedCornerShape(16.dp))
                             .padding(16.dp)
                     ) {
@@ -356,25 +394,27 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                                     modifier = Modifier.fillMaxSize()
                                         .align(Alignment.Center))
                             else {
-                                LazyColumn(
-                                    modifier = Modifier.fillMaxSize(),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                Box(
+                                    modifier = Modifier.wrapContentSize().align(Alignment.TopCenter) // Adjusts the size to fit the content
                                 ) {
-                                    // Using count
-                                    friendsEmails?.let {
-                                        items(it.size) { index ->
-                                            val user = allUsers?.find { user -> user.email == it[index] } // Find the user in allUsers
+                                    Column(
+                                        modifier = Modifier.wrapContentSize(), // Ensures the Column is only as big as its content
+                                        verticalArrangement = Arrangement.spacedBy(12.dp) // Add spacing between items
+                                    ) {
+                                        friendsEmails?.forEach { email ->
+                                            val user = allUsers?.find { user -> user.email == email } // Find the user in allUsers
                                             val isFlying = user?.flying ?: false // Get the flying status or default to false
 
                                             FriendBox(
-                                                userEmail =authUser?.email.toString(),
-                                                email = it[index],
+                                                userEmail = authUser?.email.toString(),
+                                                email = email,
                                                 isFlying = isFlying,
                                                 navController = navController
                                             )
                                         }
                                     }
                                 }
+
                             }
                         } else if (selectedTab == "Friend Requests") {
                             // Check if friendRequests is not null or empty
@@ -407,38 +447,6 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                         }
                     }
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp)
-                    ) {
-
-                        Button(
-                            onClick = {
-                                showDialog = true
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSent) Color.Green else Color(0xffBB9753) // Dynamic color
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Text(
-                                text = if (isSent) "Friend Request Sent!" else "Add Friend", // Dynamic text
-                                color = Color.White
-                            )
-                        }
-
-// Reset state after 2 seconds when `isSent` is true
-                        if (isSent) {
-                            LaunchedEffect(isSent) {
-                                kotlinx.coroutines.delay(2000) // Wait for 2 seconds
-                                isSent = false // Reset the button state
-                            }
-                        }
-
-
-                    }
 // Pop-up Dialog for entering email
                     if (showDialog) {
                         AlertDialog(
