@@ -5,12 +5,14 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Paint.Align
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
 import android.media.MediaPlayer
+import android.os.Looper
 import android.util.Log
 import android.widget.ImageButton
 import android.widget.Toast
@@ -51,6 +53,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.*
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -82,6 +85,10 @@ import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.AudioViewModel
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -399,12 +406,38 @@ fun MapScreen(navController: NavController) {
                         mutableStateOf(sharedPreferences.getLong("startTime", -1L))
                     }
                     var timer by remember { mutableStateOf(0L) }
+                    var totalDistance by remember { mutableStateOf(0.0) } // Total distance in meters
+                    var previousLocation: LatLng? by remember { mutableStateOf(null) }
                     val coroutineScope = rememberCoroutineScope()
+
+                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+                    val locationCallback = remember {
+                        object : LocationCallback() {
+                            override fun onLocationResult(locationResult: LocationResult) {
+                                super.onLocationResult(locationResult)
+                                locationResult.locations.lastOrNull()?.let { location ->
+                                    val currentLocation = LatLng(location.latitude, location.longitude)
+                                    if (previousLocation != null) {
+                                        totalDistance += calculateDistance(previousLocation!!, currentLocation)
+                                    }
+                                    previousLocation = currentLocation
+                                }
+                            }
+                        }
+                    }
 
                     LaunchedEffect(currTrip) {
                         if (currTrip != null && startTime == -1L) {
                             startTime = System.currentTimeMillis()
                             editor.putLong("startTime", startTime).apply() // Save the start time
+
+                            // Start location updates
+                            val locationRequest = LocationRequest.create().apply {
+                                interval = 1000 // 1 second interval
+                                fastestInterval = 500
+                                priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+                            }
+                            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
                         }
                     }
 
@@ -458,66 +491,77 @@ fun MapScreen(navController: NavController) {
                                     color = Color.White,
                                     fontSize = 28.sp,
                                     modifier = Modifier
-                                        .padding(bottom = 16.dp)
+                                        .padding(bottom = 8.dp)
                                         .align(Alignment.TopCenter)
                                 )
                             }
+
                             Row(
                                 modifier = Modifier
                                     .padding(top = 32.dp)
                                     .fillMaxWidth(),
 
-                                ) {
-                                // Use Box to layer images
+                            ) {
                                 Box(
-                                    modifier = Modifier.size(100.dp) // Size of the Box
+                                    modifier = Modifier.size(100.dp) // Adjust size as needed
                                 ) {
-                                    // Bottom image
                                     Image(
                                         painter = painterResource(id = if (curse) R.drawable.background_for_broom_curse else R.drawable.background_for_broom),
-                                        contentDescription = "Broom Image",
-                                        modifier = Modifier.fillMaxSize() // Fills the Box
+                                        contentDescription = "Broom Background",
+                                        modifier = Modifier.fillMaxSize(),
                                     )
 
-                                    // Top image
                                     Image(
-                                        painter = painterResource(id = R.drawable.nimbus_2000), // Replace with your overlay image resource
-                                        contentDescription = "Overlay Image",
+                                        painter = painterResource(id = R.drawable.nimbus_2000), // Overlay image
+                                        contentDescription = "Broom Overlay",
                                         modifier = Modifier
-                                            .size(90.dp) // Adjust size of the overlay image
-                                            .align(Alignment.Center) // Center it on top of the background image
+                                            .size(90.dp) // Overlay image size
+                                            .align(Alignment.Center) // Center over the background
                                     )
                                 }
-                            }
 
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .align(Alignment.Center),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
+                                // Details section (time and distance)
+                                Column {
+                                    // Time Row
+                                    Row(
+                                        horizontalArrangement = Arrangement.Start
+                                    ) {
+                                        Image(
+                                            painter = painterResource(id = R.drawable.time_trip),
+                                            contentDescription = "Time Trip Logo",
+                                            modifier = Modifier
+                                                .size(40.dp) // Adjust icon size
+                                                .padding(start = 16.dp, end = 4.dp)
+                                                .align(Alignment.CenterVertically)
+                                        )
+                                        Text(
+                                            text = formattedTime,
+                                            color = Color.White,
+                                            fontSize = 18.sp, // Adjust text size as needed
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
+                                    }
 
-                                Row(
-                                    horizontalArrangement = Arrangement.Start
-
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.time_trip),
-                                        contentDescription = "Time Trip Logo",
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .padding(start = 16.dp, end = 4.dp)
-                                            .align(Alignment.CenterVertically)
-                                    )
-
-                                    // Timer text
-                                    Text(
-                                        text = formattedTime,
-                                        color = Color.White,
-                                        fontSize = 18.sp,
-                                        modifier = Modifier.align(Alignment.CenterVertically)
-                                    )
+                                    // Distance Row
+                                    Row(
+                                        horizontalArrangement = Arrangement.Start,
+                                        modifier = Modifier.offset(y = (-12).dp)
+                                    ) {
+                                        Image(
+                                            painter = painterResource(id = R.drawable.m_logo),
+                                            contentDescription = "Distance Logo",
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .padding(start = 16.dp, end = 4.dp)
+                                                .align(Alignment.CenterVertically)
+                                        )
+                                        Text(
+                                            text = String.format("%.1f", totalDistance),
+                                            color = Color.White,
+                                            fontSize = 18.sp,
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -529,6 +573,7 @@ fun MapScreen(navController: NavController) {
                                 editor.remove("startTime").apply()
                                 startTime = -1L
                                 timer = 0L
+                                previousLocation = null
 
                                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
@@ -537,9 +582,11 @@ fun MapScreen(navController: NavController) {
                                         userLocation = LatLng(location.latitude, location.longitude)
 
                                         // Move this inside to ensure userLocation is updated before calling endTrip
-                                        viewmodel.endTrip(authUser?.email.toString(), 10.0, userLocation!!, context) { ret ->
+                                        viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
                                             if (ret) {
                                                 hasTrip = false
+
+                                                totalDistance = 0.0
 
                                                 navController.navigate(Screens.Camera.route)
                                             }
@@ -686,23 +733,31 @@ fun MapScreen(navController: NavController) {
                                             }
 
                                             if (timeLeft == 0) {
-                                                editor.remove("startTime").apply()
-                                                startTime = -1L
-                                                timer = 0L
-
                                                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
                                                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                                                     if (location != null) {
                                                         userLocation = LatLng(location.latitude, location.longitude)
 
-                                                        viewmodel.endTrip(authUser?.email.toString(), 10.0, userLocation!!, context) { ret ->
+                                                        viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
                                                             if (ret) {
                                                                 hasTrip = false
 
                                                                 val userViewmodel = UserViewModel()
                                                                 userViewmodel.removeCurse(authUser?.email.toString())
                                                                 curse = false
+
+                                                                editor.remove("startTime").apply()
+                                                                startTime = -1L
+                                                                timer = 0L
+
+                                                                if (isPlaying) {
+                                                                    mediaPlayer?.pause()
+                                                                    isPlaying = false
+                                                                }
+
+                                                                previousLocation = null
+                                                                totalDistance = 0.0
                                                             }
                                                         }
                                                     } else {
@@ -965,6 +1020,17 @@ fun getScaledMarkerIcon(context: Context, drawableId: Int, width: Int, height: I
     return BitmapDescriptorFactory.fromBitmap(scaledBitmap)
 }
 
+// Utility function to calculate distance between two locations
+private fun calculateDistance(start: LatLng, end: LatLng): Double {
+    val results = FloatArray(1)
+    Location.distanceBetween(
+        start.latitude, start.longitude,
+        end.latitude, end.longitude,
+        results
+    )
+    return results[0].toDouble() // Distance in meters
+}
+
 @Composable
 fun ShakeDetector(
     shakeThreshold: Float = 300f, // Adjust to prevent false positives
@@ -1049,7 +1115,7 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm:
                     val broom = Broom(
                         name = child.child("Name").value as String,
                         category = child.child("Category").value as String,
-                        distance = (child.child("Distance").value as Long).toDouble(),
+                        distance = convertToDouble(child.child("Distance").value),
                         price = convertToDouble(child.child("Price").value),
                         latitude = convertToDouble(child.child("Latitude").value),
                         longitude = convertToDouble(child.child("Longitude").value),

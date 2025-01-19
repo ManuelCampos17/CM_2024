@@ -161,8 +161,6 @@ class UserViewModel: ViewModel(){
         }
     }
 
-
-
     // função para atualizar a house
     fun updateUserHouse(email: String, house: String){
         // Query the database to find the user with the matching email

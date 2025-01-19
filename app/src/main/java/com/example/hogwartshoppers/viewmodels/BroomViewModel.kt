@@ -58,6 +58,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.roundToInt
 
 sealed interface BroomUIState {
     data class Success(val broomInfo: List<Broom>) : BroomUIState
@@ -87,7 +88,7 @@ class BroomViewModel: ViewModel() {
                 val broom = Broom(
                     name = allBrooms.child("Name").value as String,
                     category = allBrooms.child("Category").value as String,
-                    distance = (allBrooms.child("Distance").value as Long).toDouble(),
+                    distance = convertToDouble(allBrooms.child("Distance").value),
                     price = convertToDouble(allBrooms.child("Price").value),
                     latitude = convertToDouble(allBrooms.child("Latitude").value),
                     longitude = convertToDouble(allBrooms.child("Longitude").value),
@@ -110,7 +111,7 @@ class BroomViewModel: ViewModel() {
                     val broom = Broom(
                         name = broomSnapshot.child("Name").value as String,
                         category = broomSnapshot.child("Category").value as String,
-                        distance = (broomSnapshot.child("Distance").value as Long).toDouble(),
+                        distance = convertToDouble(broomSnapshot.child("Distance").value),
                         price = convertToDouble(broomSnapshot.child("Price").value),
                         latitude = convertToDouble(broomSnapshot.child("Latitude").value),
                         longitude = convertToDouble(broomSnapshot.child("Longitude").value),
@@ -243,6 +244,8 @@ class BroomViewModel: ViewModel() {
 
     // acabar uma trip
     fun endTrip(userEmail: String, distance: Double, userLoc: LatLng, context: Context, callback: (Boolean) -> Unit) {
+        val roundedDistance = (distance * 10).roundToInt() / 10.0
+
         // Fetch the last trip for the user
         tripsRef.child(userEmail.replace(".", "|"))
             .orderByKey()  // Order by key (ID)
@@ -258,12 +261,7 @@ class BroomViewModel: ViewModel() {
 
                     // Get the current distance of the trip
                     tripRef.get().addOnSuccessListener { tripSnapshot ->
-                        // Retrieve the current distance, handling different types
-                        val currentDistance = convertToDouble(tripSnapshot.child("distance").value)
                         val broomName = tripSnapshot.child("broomName").value as String
-
-                        // Sum the current distance with the new distance
-                        val newDistance = currentDistance + distance
 
                         // Extract the stored time (HH:mm:ss format)
                         val timeString = tripSnapshot.child("time").value as String
@@ -297,12 +295,14 @@ class BroomViewModel: ViewModel() {
                                 // Prepare the updated trip data
                                 val updatedTrip = mapOf(
                                     "active" to false,  // Mark the trip as ended
-                                    "distance" to newDistance,  // Set the summed distance
+                                    "distance" to roundedDistance,  // Set the summed distance
                                     "price" to price
                                 )
 
                                 updateLocation(broom.name, userLoc.latitude, userLoc.longitude)
                                 updateUserFlying(userEmail,false)
+                                updateDistanceBroom(roundedDistance, broom.name)
+                                updateUserDistance(userEmail, roundedDistance)
 
                                 // Update the last trip with the new data
                                 tripRef.updateChildren(updatedTrip)
@@ -361,6 +361,36 @@ class BroomViewModel: ViewModel() {
                 // Failed to retrieve the trips
                 callback(false)
             }
+    }
+
+    // função para atualizar a distancia
+    fun updateUserDistance(email: String, distance: Double) {
+        // Query the database to find the user with the matching email
+        usersRef.orderByChild("email").equalTo(email).get().addOnSuccessListener { snapshot ->
+            if (snapshot.exists()) {
+                for (userSnapshot in snapshot.children) {
+                    // Get the current distance from the database
+                    val currentDistance = when (val value = userSnapshot.child("distance").value) {
+                        is Double -> value  // If it's already a Double
+                        is Long -> value.toDouble()  // If it's a Long, convert it to Double
+                        is Int -> value.toDouble()  // If it's an Int, convert it to Double
+                        else -> 0.0  // Default to 0.0 if null or unexpected type
+                    }
+
+                    // Calculate the new distance by summing the old and new distances
+                    val newDistance = currentDistance + distance
+
+                    // Update the database with the new distance
+                    userSnapshot.ref.child("distance").setValue(newDistance)
+                }
+            } else {
+                // Handle case where no user is found with the provided email
+                Log.e("Firebase", "No user found with email: $email")
+            }
+        }.addOnFailureListener { exception ->
+            // Handle any errors that occur while querying the database
+            Log.e("Firebase", "Error querying user: ${exception.message}")
+        }
     }
 
     // update the picture of the trip
