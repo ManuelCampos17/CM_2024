@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -61,6 +63,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.User
+import com.example.hogwartshoppers.viewmodels.RaceViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -72,8 +75,10 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
     val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
+    val raceViewModel: RaceViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
     var friend by remember { mutableStateOf<User?>(null) }
+    var showPopup by remember { mutableStateOf(false) }
 
     LaunchedEffect(authUser?.email.toString()) {
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
@@ -82,6 +87,18 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
 
         userViewModel.getUserInfo(friendEmail) { user ->
             friend = user // Update friend with the fetched data
+        }
+
+        raceViewModel.createRace(authUser?.email.toString(), friendEmail) {
+            if (!it) {
+                navController.navigate(
+                    Screens.Friends.route
+                        .replace(
+                            oldValue = "{acceptedRequest}",
+                            newValue = "false"
+                        )
+                )
+            }
         }
     }
 
@@ -245,7 +262,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                             )
 
                         Button(
-                            onClick = {},
+                            onClick = { showPopup = true },
                             modifier = Modifier
                                 .size(275.dp, 50.dp)
                                 .fillMaxWidth()
@@ -256,6 +273,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                         ) {
                             Text("Select finish line")
                         }
+
 
                         Row(
                             modifier = Modifier
@@ -305,10 +323,6 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                                 navController.navigate(
                                     Screens.Friends.route
                                         .replace(
-                                            oldValue = "{email}",
-                                            newValue = authUser?.email.toString()
-                                        )
-                                        .replace(
                                             oldValue = "{acceptedRequest}",
                                             newValue = "false"
                                         )
@@ -335,6 +349,75 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                             )
                         ) {
                             Text("Start race against ${friend?.username}")
+                        }
+                    }
+                }
+            }
+
+            // Popup appears when the button is clicked
+            if (showPopup) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .wrapContentSize()
+                            .align(Alignment.Center)
+                            .padding(16.dp)
+                                .border(3.dp, Color(0xffBB9753), shape = RoundedCornerShape(16.dp))
+                            .background(Color(0xff4b2f1b),
+                                shape = RoundedCornerShape(16.dp)),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .wrapContentSize(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val finishLines = listOf("Quidditch Pitch", "Forbidden Forest", "Hogsmeade","rofess","babaribubari")
+
+                            Text(text ="Select one of the following:",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                                                    .padding(bottom = 10.dp))
+
+                            LazyColumn(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .padding(bottom = 16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+
+                                items(finishLines.size) { line ->
+                                    Button(
+                                        onClick = {
+                                            // Handle finish line selection
+                                            println("Selected: $line")
+                                            showPopup = false // Close popup after selection
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xffBB9753)
+                                        )
+                                    ) {
+                                        Text(finishLines[line])
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Close button for the popup
+                            Button(
+                                onClick = { showPopup = false },
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xffe22134))
+                            ) {
+                                Text("Close")
+                            }
                         }
                     }
                 }
