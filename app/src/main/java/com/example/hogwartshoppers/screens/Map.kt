@@ -111,6 +111,9 @@ fun MapScreen(navController: NavController) {
 
     var curse by remember { mutableStateOf(false) }
 
+    var invited by remember { mutableStateOf(false) }
+    var whoInvited by remember { mutableStateOf("") }
+
     // Pulsing Box logic here
     var sizeState by remember { mutableStateOf(true) }
     // State to control the offset of the shaking Box
@@ -154,6 +157,7 @@ fun MapScreen(navController: NavController) {
 
         val db: FirebaseDatabase = FirebaseDatabase.getInstance()
         val magicRef = db.getReference("Magic")
+        val invitesRef = db.getReference("Race_Invites")
 
         magicRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -169,6 +173,23 @@ fun MapScreen(navController: NavController) {
             override fun onCancelled(error: DatabaseError) {
                 Log.d("Magic", "Error fetching magic: ${error.message}")
             }
+        })
+
+        invitesRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                // Iterate through the children in "Race_Invites"
+                for (child in snapshot.children) {
+                    val toValue = child.child("to").value as? String
+                    if (toValue == authUser?.email) {
+                        invited = true // Update event variable
+                        whoInvited = child.child("from").value as String
+                        break // Exit the loop once a match is found
+                    }
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {
+            }
+
         })
 
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->

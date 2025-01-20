@@ -70,13 +70,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.hogwartshoppers.model.Race
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
+import com.example.hogwartshoppers.viewmodels.RaceViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -92,6 +96,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
     val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
+    val raceViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
 
     var allUsers by remember { mutableStateOf<List<User>?>(null) }
@@ -558,6 +563,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
 @Composable
 fun FriendBox(userEmail: String,email: String, isFlying: Boolean, navController: NavController, broomViewModel: BroomViewModel = viewModel()) {
     val userViewModel: UserViewModel = viewModel()
+    val raceViewModel: RaceViewModel = viewModel()
     var friend by remember { mutableStateOf<User?>(null) }
 
     // Fetch the user's info for each friend
@@ -570,6 +576,7 @@ fun FriendBox(userEmail: String,email: String, isFlying: Boolean, navController:
     friend?.let { f ->
 
         var isFriendRiding by remember { mutableStateOf(true) }
+        var raceAlreadyExists by remember { mutableStateOf(false) }
         var showImageDialog by remember { mutableStateOf(false) }
         var friendRemoved by remember { mutableStateOf(false) }
 
@@ -710,15 +717,45 @@ fun FriendBox(userEmail: String,email: String, isFlying: Boolean, navController:
                     // Button for "Challenge for Race"
                     Button(
                         onClick = {
-                            broomViewModel.isUserRiding(f.email) { success ->
-                                if (success) {
-                                    navController.navigate("race_conditions_screen/${f.email}")
+                                if (isFlying) {
+                                    var races: List<Race>? = null
+                                    raceViewModel.getRaces { races = it
+                                        Log.d("Races", races.toString())
+                                            // check if there is already a race with the user and friend
+                                            val raceUser = races.find { it.userRace == userEmail && it.friendRace == f.email }
+                                            val raceFriend = races.find { it.userRace == f.email && it.friendRace == userEmail }
+
+                                            if (raceUser != null || raceFriend != null)
+                                                // check if there is a race without invites = null
+                                                if (raceUser?.invite != null || raceFriend?.invite != null)
+                                                    raceAlreadyExists = true
+                                                else {
+                                                    // delete races in raceUser and raceFriend
+                                                    if (raceUser != null)
+                                                        raceViewModel.deleteRace(userEmail, f.email) { success ->
+                                                            if (success) {
+                                                                Log.d("Race Deleted", "Race deleted")
+                                                            }
+                                                            else
+                                                                Log.e("Race Not Deleted", "Race not deleted")
+                                                        }
+                                                    if (raceFriend != null)
+                                                        raceViewModel.deleteRace(f.email, userEmail) { success ->
+                                                            if (success) {
+                                                                Log.d("Race Deleted", "Race deleted")
+                                                            }
+                                                            else
+                                                                Log.e("Race Not Deleted", "Race not deleted")
+                                                        }
+                                                    navController.navigate("race_conditions_screen/${f.email}")
+                                                }
+                                            else
+                                                navController.navigate("race_conditions_screen/${f.email}")
+                                        }
                                 }
                                 else {
-                                  //isFriendRiding = false
-                                    navController.navigate("race_conditions_screen/${f.email}") // temp
+                                  isFriendRiding = false
                                 }
-                            }
                         },
                         modifier = Modifier.weight(1f), // Take equal space on each side of the Row
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
@@ -728,46 +765,54 @@ fun FriendBox(userEmail: String,email: String, isFlying: Boolean, navController:
                     }
                 }
 
-                if(isFlying) {
-                    Button(
-                        onClick = {
-                            userViewModel.curseUser(email)
-                        },
-                        modifier = Modifier
-                            .padding(top = 5.dp)
-                            .fillMaxWidth(), // Button will take up full width of its parent
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), // Make button's background transparent
-                        shape = RoundedCornerShape(16.dp) // Apply rounded corners to the button
+                Button(
+                    onClick = {
+                        userViewModel.curseUser(email)
+                    },
+                    modifier = Modifier
+                        .padding(top = 5.dp)
+                        .fillMaxWidth(), // Button will take up full width of its parent
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent), // Make button's background transparent
+                    shape = RoundedCornerShape(16.dp) // Apply rounded corners to the button
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize() // Ensure the box takes up full size of the button
-                        ) {
-                            // Image as background with RoundedCorners
-                            Image(
-                                painter = painterResource(id = R.drawable.curse_texture), // Replace with your image resource
-                                contentDescription = "Button Background",
-                                modifier = Modifier
-                                    .fillMaxSize() // Ensure image covers the button area
-                                    .clip(RoundedCornerShape(16.dp)) // Apply rounded corners to the image
-                                    .background(Color.Gray), // Optional: add a background if desired
-                                contentScale = ContentScale.Crop // Adjust how the image is scaled
-                            )
 
-                            // Text inside button (centered)
-                            Text(
-                                text = "Curse",
-                                color = Color.White,
-                                modifier = Modifier.align(Alignment.Center) // Center the text inside the button
-                            )
-                        }
+                        Image(
+                            painter = painterResource(id = R.drawable.curse_texture),
+                            contentDescription = "Button Background",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color.Gray),
+                            contentScale = ContentScale.Crop,
+                            colorFilter = if(!isFlying) { ColorFilter.colorMatrix(
+                                ColorMatrix().apply { setToSaturation(0f) }
+                                )} else null
+                        )
+
+
+                        Text(
+                            text = "Curse",
+                            color = Color.White,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
                     }
                 }
 
                 if(!isFriendRiding) {
                     Text(
                         text = "You can't race a friend that isn't riding a broom!",
-                        color = Color.Red, // Red text color
-                        fontSize = 12.sp // Smaller font size (you can adjust the value as needed)
+                        color = Color.Red,
+                        fontSize = 12.sp
+                    )
+                }
+                if(raceAlreadyExists) {
+                    Text(
+                        text = "You already have a race with this friend!",
+                        color = Color.Red,
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -818,7 +863,7 @@ fun FriendRequestItem(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = friend.username, // Friend's username
+                        text = friend.username,
                         fontSize = 18.sp,
                         color = Color.Black,
                         modifier = Modifier.padding(bottom = 8.dp)

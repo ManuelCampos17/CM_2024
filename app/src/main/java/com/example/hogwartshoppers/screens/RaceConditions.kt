@@ -87,6 +87,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
     var showPopup by remember { mutableStateOf(false) }
     var race by remember { mutableStateOf<Race?>(null) }
     var finishLine by remember { mutableStateOf("") }
+    var alreadyInvited by remember { mutableStateOf(false) }
 
     LaunchedEffect(authUser?.email.toString()) {
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
@@ -350,6 +351,12 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
 
                         Button(
                             onClick = {
+                                raceViewModel.deleteRace(authUser?.email.toString(), friendEmail) {
+                                    if(!it)
+                                        Log.d("Error", "Error deleting race")
+                                    else
+                                        Log.d("Success", "Race deleted")
+                                }
                                 navController.navigate(
                                     Screens.Friends.route
                                         .replace(
@@ -369,7 +376,25 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                         }
 
                         Button(
-                            onClick = {navController.navigate("race_screen/${friendEmail}")},
+                            onClick = {
+                                raceViewModel.getInvites() { invites ->
+                                    for (invite in invites) {
+                                        if (invite.to == friendEmail) {
+                                            alreadyInvited = true
+                                        }
+                                    }
+                                    if (!alreadyInvited) {
+                                        raceViewModel.inviteUser(authUser?.email.toString(), friendEmail) { success ->
+                                            if (success) {
+                                                navController.navigate("race_screen/${friendEmail}")
+                                            }
+                                            else {
+                                                Log.d("Error", "Error inviting user")
+                                            }
+                                        }
+                                    }
+                                }
+                            },
                             modifier = Modifier
                                 .size(275.dp, 50.dp)
                                 .fillMaxWidth()
@@ -381,6 +406,17 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                             Text(text = "Start race against ${friend?.username}",
                                 maxLines = 1, // Set the max number of lines for the text
                                 overflow = TextOverflow.Ellipsis)
+                        }
+
+                        if(alreadyInvited) {
+                            Text(
+                                text = "Looks like this user was already invited to another race\n " +
+                                        "Wait for them to reject the invite or finish the race",
+                                color = Color.Red,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                                    .align(Alignment.CenterHorizontally),
+                                fontSize = 12.sp
+                            )
                         }
                     }
                 }

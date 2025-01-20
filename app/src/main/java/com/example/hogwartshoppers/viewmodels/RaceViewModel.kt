@@ -52,6 +52,26 @@ class RaceViewModel: ViewModel() {
         }
     }
 
+    fun getRaces(callback: (List<Race>) -> Unit) {
+        racesRef.get().addOnSuccessListener { snapshot ->
+            val racesList = mutableListOf<Race>()
+                for (raceSnapshot in snapshot.children) {
+                    val raceData = Race(
+                        userRace = raceSnapshot.child("userRace").value as String,
+                        friendRace = raceSnapshot.child("friendRace").value as String,
+                        finished = raceSnapshot.child("finished").value as Boolean,
+                        latitude = convertToDouble(raceSnapshot.child("latitude").value),
+                        longitude = convertToDouble(raceSnapshot.child("longitude").value),
+                        time = raceSnapshot.child("time").value as Long,
+                        invite = raceSnapshot.child("invite").value as Boolean?
+                    )
+                    racesList.add(raceData)
+                }
+            callback(racesList)
+        }
+    }
+
+
     fun getFinishCoords(name: String, callback: (Pair<Double, Double>?) -> Unit) {
         finishCoordsRef.get().addOnSuccessListener { snapshot ->
             val finishCoords = snapshot.children.find {
@@ -83,19 +103,6 @@ class RaceViewModel: ViewModel() {
                 invite = null
             )
             racesRef.push().setValue(race).addOnCompleteListener {
-                callback(it.isSuccessful)
-            }
-        }
-    }
-
-    // invite user to race
-    fun inviteUser(user: String, friend: String, callback: (Boolean) -> Unit){
-        racesInvitesRef.get().addOnSuccessListener { snapshot ->
-            val invite = Invite(
-                from = user,
-                to = friend
-            )
-            racesInvitesRef.push().setValue(invite).addOnCompleteListener {
                 callback(it.isSuccessful)
             }
         }
@@ -133,6 +140,33 @@ class RaceViewModel: ViewModel() {
         }
     }
 
+    // invite user to race
+    fun inviteUser(user: String, friend: String, callback: (Boolean) -> Unit){
+        racesInvitesRef.get().addOnSuccessListener { snapshot ->
+            val invite = Invite(
+                from = user,
+                to = friend
+            )
+            racesInvitesRef.push().setValue(invite).addOnCompleteListener {
+                callback(it.isSuccessful)
+            }
+        }
+    }
+
+    fun getInvites(callback: (List<Invite>) -> Unit) {
+        racesInvitesRef.get().addOnSuccessListener { snapshot ->
+            val invitesList = mutableListOf<Invite>()
+            for (inviteSnapshot in snapshot.children) {
+                val inviteData = Invite(
+                    from = inviteSnapshot.child("from").value as String,
+                    to = inviteSnapshot.child("to").value as String
+                )
+                invitesList.add(inviteData)
+            }
+            callback(invitesList)
+        }
+    }
+
     // Utility function to handle different types of distance (Long, Int, Double, etc.)
     fun convertToDouble(value: Any?): Double {
         return when (value) {
@@ -143,4 +177,3 @@ class RaceViewModel: ViewModel() {
         }
     }
 }
-

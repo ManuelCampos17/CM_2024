@@ -48,7 +48,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.hogwartshoppers.model.Race
 import com.example.hogwartshoppers.model.User
+import com.example.hogwartshoppers.viewmodels.RaceViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
@@ -69,6 +71,10 @@ fun Race(navController: NavController, friendEmail: String) {
     var currUser by remember { mutableStateOf<User?>(null) }
     var friend by remember { mutableStateOf<User?>(null) }
 
+    val raceViewModel: RaceViewModel = viewModel()
+    var currRace by remember { mutableStateOf<Race?>(null) }
+    var markerPosition by remember { mutableStateOf(LatLng(38.757969, -9.155979)) }
+
     LaunchedEffect(authUser?.email.toString()) {
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
@@ -76,6 +82,13 @@ fun Race(navController: NavController, friendEmail: String) {
 
         userViewModel.getUserInfo(friendEmail) { user ->
             friend = user // Update friend with the fetched data
+        }
+
+        raceViewModel.getRace(authUser?.email.toString(), friendEmail) { race ->
+            currRace = race
+            if (race != null) {
+                markerPosition = LatLng(race.latitude, race.longitude)
+            }
         }
     }
 
@@ -280,7 +293,7 @@ fun Race(navController: NavController, friendEmail: String) {
                                 contentAlignment = Alignment.Center  // Centers the text inside the square
                             ) {
                                 val cameraPositionState = rememberCameraPositionState()
-                                val markerPosition = LatLng(38.757969, -9.155979)
+                                val markerPositionState = rememberMarkerState()
 
                                 cameraPositionState.move(
                                     CameraUpdateFactory.newLatLngZoom(
@@ -288,6 +301,8 @@ fun Race(navController: NavController, friendEmail: String) {
                                         16f
                                     )
                                 )
+
+                                markerPositionState.position = markerPosition
 
                                 GoogleMap(
                                     cameraPositionState = cameraPositionState,
@@ -303,7 +318,7 @@ fun Race(navController: NavController, friendEmail: String) {
                                     modifier = Modifier.matchParentSize()
                                 ) {
                                     Marker(
-                                        state = rememberMarkerState(position = markerPosition)
+                                        state = markerPositionState
                                     )
                                 }
                             }
