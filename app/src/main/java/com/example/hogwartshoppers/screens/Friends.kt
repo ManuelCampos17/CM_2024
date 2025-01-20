@@ -1,19 +1,16 @@
 package com.example.hogwartshoppers.screens
 
 import android.util.Log
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,14 +33,9 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,17 +46,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hogwartshoppers.R
-import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
-import kotlinx.coroutines.NonCancellable.start
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -72,7 +58,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -87,7 +72,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -262,7 +246,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                     contentDescription = "Hogwarts Logo",
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .size(200.dp) // Adjust size as needed
+                        .size(200.dp)
                         .padding(bottom = 15.dp)
                 )
                 Column(
@@ -371,7 +355,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                             )
                         }
 
-// Reset state after 2 seconds when `isSent` is true
+                        // Reset state after 2 seconds when `isSent` is true
                         if (isSent) {
                             LaunchedEffect(isSent) {
                                 kotlinx.coroutines.delay(2000) // Wait for 2 seconds
@@ -452,7 +436,7 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                         }
                     }
 
-// Pop-up Dialog for entering email
+                    // Pop-up Dialog for entering email
                     if (showDialog) {
                         AlertDialog(
                             onDismissRequest = { showDialog = false }, // Dismiss on outside touch
@@ -722,8 +706,8 @@ fun FriendBox(userEmail: String,email: String, isFlying: Boolean, navController:
                                     raceViewModel.getRaces { races = it
                                         Log.d("Races", races.toString())
                                             // check if there is already a race with the user and friend
-                                            val raceUser = races.find { it.userRace == userEmail && it.friendRace == f.email }
-                                            val raceFriend = races.find { it.userRace == f.email && it.friendRace == userEmail }
+                                            val raceUser = races!!.find { it.userRace == userEmail && it.friendRace == f.email }
+                                            val raceFriend = races!!.find { it.userRace == f.email && it.friendRace == userEmail }
 
                                             if (raceUser != null || raceFriend != null)
                                                 // check if there is a race without invites = null

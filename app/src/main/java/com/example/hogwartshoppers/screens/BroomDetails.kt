@@ -84,7 +84,7 @@ fun BroomDetailsScreen(navController: NavController, selectedBroomName: String) 
                         painter = painterResource(id = R.drawable.hogwartslogo),
                         contentDescription = "Hogwarts Logo",
                         modifier = Modifier
-                            .size(200.dp) // Adjust size as needed
+                            .size(200.dp)
                             .align(Alignment.TopCenter)
                             .offset(y = (-25).dp)
                     )
@@ -237,7 +237,14 @@ fun BroomDetailsScreen(navController: NavController, selectedBroomName: String) 
 
                     // Buttons
                     Button(
-                        onClick = {},
+                        onClick = {
+                            navController.navigate(Screens.CustomizeBroom.route
+                                .replace(
+                                    oldValue = "{broom}",
+                                    newValue = selectedBroomName
+                                )
+                            )
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBB9753)),
                         modifier = Modifier.padding(8.dp)
                     ) {

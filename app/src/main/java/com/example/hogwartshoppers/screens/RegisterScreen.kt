@@ -31,13 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.R
-import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
 
@@ -66,7 +64,7 @@ fun RegisterScreen(navController: NavController) {
             contentDescription = "Hogwarts Logo",
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .size(200.dp) // Adjust size as needed
+                .size(200.dp)
                 .padding(bottom = 15.dp)
         )
         Column(
@@ -93,7 +91,7 @@ fun RegisterScreen(navController: NavController) {
                 onValueChange = { email = it },
                 label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp) // This makes the corners rounded
+                shape = RoundedCornerShape(16.dp)
 
             )
 
@@ -106,7 +104,7 @@ fun RegisterScreen(navController: NavController) {
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp) // This makes the corners rounded
+                shape = RoundedCornerShape(16.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -205,7 +203,7 @@ fun RegisterScreen(navController: NavController) {
                 Text(
                     text = "OR",
                     modifier = Modifier.padding(horizontal = 8.dp), // Space around the "Or"
-                    color = Color.White // You can change the color of the "Or" text
+                    color = Color.White
                 )
 
                 Divider(
@@ -233,11 +231,3 @@ fun RegisterScreen(navController: NavController) {
         )
     }
 }
-
-//@Composable
-//@Preview(showBackground = true)
-//fun RegisterScreenPreview() {
-//    HogwartsHoppersTheme {
-//        RegisterScreen()
-//    }
-//}

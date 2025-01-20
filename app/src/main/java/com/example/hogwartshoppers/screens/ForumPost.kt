@@ -1,8 +1,6 @@
 package com.example.hogwartshoppers.screens
 
 import android.util.Log
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,14 +31,9 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,14 +44,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hogwartshoppers.R
-import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
-import kotlinx.coroutines.NonCancellable.start
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
@@ -68,20 +55,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.Posts
 import com.example.hogwartshoppers.model.Replies
 import com.example.hogwartshoppers.model.User
-import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.ForumViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -103,7 +86,7 @@ fun ForumPostScreen(navController: NavController, postEmail: String, postTitle: 
     var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(authUser?.email.toString()) {
-        // Get the user info (if needed)
+        // Get the user info
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
         }
@@ -151,7 +134,7 @@ fun ForumPostScreen(navController: NavController, postEmail: String, postTitle: 
                         painter = painterResource(id = R.drawable.hogwartslogo),
                         contentDescription = "Hogwarts Logo",
                         modifier = Modifier
-                            .size(200.dp) // Adjust size as needed
+                            .size(200.dp)
                             .align(Alignment.TopCenter)
                             .offset(y = (-25).dp)
                     )
@@ -309,7 +292,7 @@ fun ForumPostScreen(navController: NavController, postEmail: String, postTitle: 
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 150.dp) // Cap the height at 300.dp
+                                    .heightIn(min = 150.dp) // Cap the height
                                     .padding(12.dp)
                                     .background(Color.White, shape = RoundedCornerShape(16.dp))
                                     .padding(16.dp)
@@ -321,7 +304,7 @@ fun ForumPostScreen(navController: NavController, postEmail: String, postTitle: 
                                 ) {
                                     Text(
                                         text = currentPost?.text ?: "Loading...",
-                                        color = Color.Black // Changed to black for visibility against white background
+                                        color = Color.Black
                                     )
                                 }
                             }

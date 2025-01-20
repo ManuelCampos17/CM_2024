@@ -23,8 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -118,10 +116,10 @@ fun TripHistoryScreen(navController: NavController) {
                     ) {
 
                         Divider(
-                            color = Color.White,  // Color of the line
-                            thickness = 1.dp,     // Line thickness
+                            color = Color.White,
+                            thickness = 1.dp,
                             modifier = Modifier
-                                .fillMaxWidth()   // Makes the line span the width
+                                .fillMaxWidth()
                                 .padding(horizontal = 24.dp)
                                 .padding(top = 150.dp)
                         )
@@ -163,10 +161,10 @@ fun TripHistoryScreen(navController: NavController) {
                             }
                         },
                         modifier = Modifier
-                            .padding(start = 30.dp, top = 50.dp) // Adjust position on the screen
-                            .size(60.dp), // Make the button larger for better content alignment
-                        containerColor = Color(0xff321f12), // Brown background for the button
-                        contentColor = Color.White // White color for the content inside
+                            .padding(start = 30.dp, top = 50.dp)
+                            .size(60.dp),
+                        containerColor = Color(0xff321f12),
+                        contentColor = Color.White
                     )
                 }
             }
@@ -183,7 +181,7 @@ fun TripHistoryScreen(navController: NavController) {
                     contentDescription = "Hogwarts Logo",
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .size(200.dp) // Adjust size as needed
+                        .size(200.dp)
                         .padding(bottom = 15.dp)
                 )
                 Column(
@@ -197,13 +195,13 @@ fun TripHistoryScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .size(350.dp, 70.dp) // Set specific width and height
+                            .size(350.dp, 70.dp)
                             .padding(bottom = 30.dp)
                             .background(
-                                color = Color(0xff4b2f1b), // Brown background
-                                shape = RoundedCornerShape(16.dp) // Makes corners rounded
+                                color = Color(0xff4b2f1b),
+                                shape = RoundedCornerShape(16.dp)
                             ),
-                        contentAlignment = Alignment.Center // Centers the text inside the box
+                        contentAlignment = Alignment.Center
 
                     ) {
                         Text(
@@ -222,22 +220,22 @@ fun TripHistoryScreen(navController: NavController) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .wrapContentSize(Alignment.Center) // Centers both the text and image
+                                    .wrapContentSize(Alignment.Center)
                             ) {
                                 Text(
                                     text = "You have no trips",
                                     color = Color.White,
                                     fontSize = 40.sp, // Increases the text size
-                                    modifier = Modifier.align(Alignment.CenterHorizontally) // Centers the text horizontally
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
                                 )
-                                Spacer(modifier = Modifier.height(32.dp)) // Adds more space between the text and the image
+                                Spacer(modifier = Modifier.height(32.dp))
                                 Image(
                                     painter = painterResource(id = R.drawable.harry_pot_broom),
                                     contentDescription = "No trips image",
                                     modifier = Modifier
-                                        .fillMaxWidth() // Makes the image fill the width of the screen
-                                        .height(400.dp) // Adjusts the height of the image (you can increase this value)
-                                        .align(Alignment.CenterHorizontally) // Centers the image horizontally
+                                        .fillMaxWidth()
+                                        .height(400.dp)
+                                        .align(Alignment.CenterHorizontally)
                                 )
                             }
                         }
@@ -246,7 +244,6 @@ fun TripHistoryScreen(navController: NavController) {
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // Using count
                                 userTrips?.let {
                                     items(it.size) { index ->
                                         TripHistoryBox(
@@ -368,7 +365,7 @@ fun AttributeRow(title: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp), // Add horizontal padding
+            .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

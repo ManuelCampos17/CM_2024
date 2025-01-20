@@ -29,6 +29,11 @@ fun NavGraph(navController: NavHostController) {
             MapScreen(navController = navController)
         }
 
+        composable(route = Screens.CustomizeBroom.route + "?broom={broom}"){ navBackStack ->
+            val broom: String = navBackStack.arguments?.getString("broom").toString()
+            CustomizeBroomScreen(navController = navController, selectedBroomName = broom)
+        }
+
         composable(route = Screens.Settings.route){
             SettingsScreen(navController = navController)
         }

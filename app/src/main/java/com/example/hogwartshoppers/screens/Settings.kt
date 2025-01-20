@@ -27,7 +27,6 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
@@ -40,23 +39,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hogwartshoppers.R
-import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
-import kotlinx.coroutines.NonCancellable.start
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.model.User
@@ -105,7 +97,7 @@ fun SettingsScreen(navController: NavController) {
                         painter = painterResource(id = R.drawable.hogwartslogo),
                         contentDescription = "Hogwarts Logo",
                         modifier = Modifier
-                            .size(200.dp) // Adjust size as needed
+                            .size(200.dp)
                             .align(Alignment.TopCenter)
                             .offset(y = (-25).dp)
                     )
@@ -118,10 +110,10 @@ fun SettingsScreen(navController: NavController) {
                     ) {
 
                         Divider(
-                            color = Color.White,  // Color of the line
-                            thickness = 1.dp,     // Line thickness
+                            color = Color.White,
+                            thickness = 1.dp,
                             modifier = Modifier
-                                .fillMaxWidth()   // Makes the line span the width
+                                .fillMaxWidth()
                                 .padding(horizontal = 24.dp)
                                 .padding(top = 150.dp)
                         )
@@ -163,10 +155,10 @@ fun SettingsScreen(navController: NavController) {
                             }
                         },
                         modifier = Modifier
-                            .padding(start = 30.dp, top = 50.dp) // Adjust position on the screen
-                            .size(60.dp), // Make the button larger for better content alignment
-                        containerColor = Color(0xff321f12), // Brown background for the button
-                        contentColor = Color.White // White color for the content inside
+                            .padding(start = 30.dp, top = 50.dp)
+                            .size(60.dp),
+                        containerColor = Color(0xff321f12),
+                        contentColor = Color.White
                     )
                 }
             }
@@ -183,7 +175,7 @@ fun SettingsScreen(navController: NavController) {
                     contentDescription = "Hogwarts Logo",
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .size(200.dp) // Adjust size as needed
+                        .size(200.dp)
                         .padding(bottom = 15.dp)
                 )
                 Column(
@@ -197,13 +189,13 @@ fun SettingsScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .size(350.dp, 70.dp) // Set specific width and height
+                            .size(350.dp, 70.dp)
                             .padding(bottom = 30.dp)
                             .background(
-                                color = Color(0xff4b2f1b), // Brown background
-                                shape = RoundedCornerShape(16.dp) // Makes corners rounded
+                                color = Color(0xff4b2f1b),
+                                shape = RoundedCornerShape(16.dp)
                             ),
-                        contentAlignment = Alignment.Center // Centers the text inside the box
+                        contentAlignment = Alignment.Center
 
                     ) {
                         Text(
@@ -235,7 +227,7 @@ fun SettingsScreen(navController: NavController) {
                                 .align(Alignment.Start)
                                 .padding(start = 30.dp),
                             style = TextStyle(
-                                fontSize = 22.sp // Specify the size in `sp` (scale-independent pixels)
+                                fontSize = 22.sp
                             )
                         )
 
@@ -245,7 +237,7 @@ fun SettingsScreen(navController: NavController) {
                             label = { Text("Coupon") },
                             modifier = Modifier
                                 .size(275.dp, 50.dp),
-                            shape = RoundedCornerShape(30.dp) // This makes the corners rounded
+                            shape = RoundedCornerShape(30.dp)
                         )
 
                         Button(
@@ -331,11 +323,3 @@ fun SettingRow(label: String, state: MutableState<Boolean>) {
         )
     }
 }
-
-//@Composable
-//@Preview(showBackground = true)
-//fun SettingsScreenPreview() {
-//    HogwartsHoppersTheme {
-//        SettingsScreen()
-//    }
-//}

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -49,7 +48,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.model.BroomTrip
-import com.example.hogwartshoppers.model.Magic
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
@@ -182,10 +180,10 @@ fun Testing(navController: NavController) {
                             }
                         },
                         modifier = Modifier
-                            .padding(start = 30.dp, top = 50.dp) // Adjust position on the screen
-                            .size(60.dp), // Make the button larger for better content alignment
-                        containerColor = Color(0xff321f12), // Brown background for the button
-                        contentColor = Color.White // White color for the content inside
+                            .padding(start = 30.dp, top = 50.dp)
+                            .size(60.dp),
+                        containerColor = Color(0xff321f12),
+                        contentColor = Color.White
                     )
                 }
             }
@@ -202,7 +200,7 @@ fun Testing(navController: NavController) {
                     contentDescription = "Hogwarts Logo",
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .size(200.dp) // Adjust size as needed
+                        .size(200.dp)
                         .padding(bottom = 15.dp)
                 )
                 Column(
@@ -216,13 +214,13 @@ fun Testing(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .size(350.dp, 70.dp) // Set specific width and height
+                            .size(350.dp, 70.dp)
                             .padding(bottom = 30.dp)
                             .background(
-                                color = Color(0xff4b2f1b), // Brown background
-                                shape = RoundedCornerShape(16.dp) // Makes corners rounded
+                                color = Color(0xff4b2f1b),
+                                shape = RoundedCornerShape(16.dp)
                             ),
-                        contentAlignment = Alignment.Center // Centers the text inside the box
+                        contentAlignment = Alignment.Center
 
                     ) {
                         Text(
@@ -260,44 +258,44 @@ fun Testing(navController: NavController) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .wrapContentSize(Alignment.Center) // Centers both the text and image
+                                    .wrapContentSize(Alignment.Center)
                             ) {
                                 Text(
                                     text = "You have no trips",
                                     color = Color.White,
-                                    fontSize = 40.sp, // Increases the text size
-                                    modifier = Modifier.align(Alignment.CenterHorizontally) // Centers the text horizontally
+                                    fontSize = 40.sp,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
                                 )
-                                Spacer(modifier = Modifier.height(32.dp)) // Adds more space between the text and the image
+                                Spacer(modifier = Modifier.height(32.dp))
                                 Image(
                                     painter = painterResource(id = R.drawable.harry_pot_broom),
                                     contentDescription = "No trips image",
                                     modifier = Modifier
-                                        .fillMaxWidth() // Makes the image fill the width of the screen
-                                        .height(400.dp) // Adjusts the height of the image (you can increase this value)
-                                        .align(Alignment.CenterHorizontally) // Centers the image horizontally
+                                        .fillMaxWidth()
+                                        .height(400.dp)
+                                        .align(Alignment.CenterHorizontally)
                                 )
                             }
                         } else {
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .wrapContentSize(Alignment.Center) // Centers both the text and image
+                                    .wrapContentSize(Alignment.Center)
                             ) {
                                 Text(
                                     text = "WHATTT YOU HAVE TRIPS",
                                     color = Color.White,
-                                    fontSize = 40.sp, // Increases the text size
-                                    modifier = Modifier.align(Alignment.CenterHorizontally) // Centers the text horizontally
+                                    fontSize = 40.sp,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
                                 )
-                                Spacer(modifier = Modifier.height(32.dp)) // Adds more space between the text and the image
+                                Spacer(modifier = Modifier.height(32.dp))
                                 Image(
                                     painter = painterResource(id = R.drawable.harry_pot_broom),
                                     contentDescription = "No trips image",
                                     modifier = Modifier
-                                        .fillMaxWidth() // Makes the image fill the width of the screen
-                                        .height(400.dp) // Adjusts the height of the image (you can increase this value)
-                                        .align(Alignment.CenterHorizontally) // Centers the image horizontally
+                                        .fillMaxWidth()
+                                        .height(400.dp)
+                                        .align(Alignment.CenterHorizontally)
                                 )
                             }
                         }

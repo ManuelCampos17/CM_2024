@@ -1,6 +1,5 @@
 package com.example.hogwartshoppers.screens
 
-import android.R.attr.maxLines
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,14 +31,9 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,20 +44,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hogwartshoppers.R
-import com.example.hogwartshoppers.ui.theme.HogwartsHoppersTheme
-import kotlinx.coroutines.NonCancellable.start
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -136,7 +123,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                         painter = painterResource(id = R.drawable.hogwartslogo),
                         contentDescription = "Hogwarts Logo",
                         modifier = Modifier
-                            .size(200.dp) // Adjust size as needed
+                            .size(200.dp)
                             .align(Alignment.TopCenter)
                             .offset(y = (-25).dp)
                     )
@@ -149,10 +136,10 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                     ) {
 
                         Divider(
-                            color = Color.White,  // Color of the line
-                            thickness = 1.dp,     // Line thickness
+                            color = Color.White,
+                            thickness = 1.dp,
                             modifier = Modifier
-                                .fillMaxWidth()   // Makes the line span the width
+                                .fillMaxWidth()
                                 .padding(horizontal = 24.dp)
                                 .padding(top = 150.dp)
                         )
@@ -195,10 +182,10 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                             }
                         },
                         modifier = Modifier
-                            .padding(start = 30.dp, top = 50.dp) // Adjust position on the screen
-                            .size(60.dp), // Make the button larger for better content alignment
-                        containerColor = Color(0xff321f12), // Brown background for the button
-                        contentColor = Color.White // White color for the content inside
+                            .padding(start = 30.dp, top = 50.dp)
+                            .size(60.dp),
+                        containerColor = Color(0xff321f12),
+                        contentColor = Color.White
                     )
                 }
             }
@@ -216,7 +203,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                     contentDescription = "Hogwarts Logo",
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .size(200.dp) // Adjust size as needed
+                        .size(200.dp)
                         .padding(bottom = 15.dp)
                 )
                 Column(
@@ -230,13 +217,13 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .size(350.dp, 70.dp) // Set specific width and height
+                            .size(350.dp, 70.dp)
                             .padding(bottom = 30.dp)
                             .background(
-                                color = Color(0xff4b2f1b), // Brown background
-                                shape = RoundedCornerShape(16.dp) // Makes corners rounded
+                                color = Color(0xff4b2f1b),
+                                shape = RoundedCornerShape(16.dp)
                             ),
-                        contentAlignment = Alignment.Center // Centers the text inside the box
+                        contentAlignment = Alignment.Center
 
                     ) {
                         Text(
@@ -253,9 +240,9 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                             .background(
                                 Color(0xffe9dbc0),
                                 shape = RoundedCornerShape(16.dp)
-                            ), // Background and rounded corners
-                        verticalArrangement = Arrangement.spacedBy(16.dp), // Adds space between buttons
-                        horizontalAlignment = Alignment.CenterHorizontally // Centers the buttons horizontally
+                            ),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
 
                         Spacer(modifier = Modifier.height(14.dp))
@@ -306,11 +293,11 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                                 horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
                             ) {
                                 Image(
-                                    painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
+                                    painter = painterResource(id = R.drawable.default_ahh),
                                     contentDescription = "Default Ahh",
                                     modifier = Modifier.size(100.dp)
                                         .clip(CircleShape) // Make the image circular
-                                        .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
+                                        .border(2.dp, Color(0xff321f12), CircleShape),
                                 )
                                 Text(text = "${currUser?.username}",
                                     fontSize = 12.sp,
@@ -322,7 +309,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
 
                             // Second image: "vs"
                             Image(
-                                painter = painterResource(id = R.drawable.vs), // Replace with your drawable resource
+                                painter = painterResource(id = R.drawable.vs),
                                 contentDescription = "VS",
                                 modifier = Modifier.size(75.dp)
                                     .align(Alignment.CenterVertically)
@@ -334,11 +321,11 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                                 horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
                             ) {
                                 Image(
-                                    painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
+                                    painter = painterResource(id = R.drawable.default_ahh),
                                     contentDescription = "Default Ahh",
                                     modifier = Modifier.size(100.dp)
                                         .clip(CircleShape) // Make the image circular
-                                        .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
+                                        .border(2.dp, Color(0xff321f12), CircleShape),
                                 )
                                 Text(text = "${friend?.username}",
                                     fontSize = 12.sp,
@@ -404,7 +391,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                             )
                         ) {
                             Text(text = "Start race against ${friend?.username}",
-                                maxLines = 1, // Set the max number of lines for the text
+                                maxLines = 1,
                                 overflow = TextOverflow.Ellipsis)
                         }
 

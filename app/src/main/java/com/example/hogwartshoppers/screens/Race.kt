@@ -253,11 +253,11 @@ fun Race(navController: NavController, friendEmail: String) {
                                     horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
                                 ) {
                                     Image(
-                                        painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
+                                        painter = painterResource(id = R.drawable.default_ahh),
                                         contentDescription = "Default Ahh",
                                         modifier = Modifier.size(100.dp)
                                             .clip(CircleShape) // Make the image circular
-                                            .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
+                                            .border(2.dp, Color(0xff321f12), CircleShape),
                                     )
                                     Text(text = "${currUser?.username}", fontSize = 12.sp, color = Color.Black) // First text
                                     Text(text = "Currently Losing!", fontSize = 12.sp, color = Color.Red) // First text
@@ -265,9 +265,9 @@ fun Race(navController: NavController, friendEmail: String) {
 
                                 // Second image: "vs"
                                 Image(
-                                    painter = painterResource(id = R.drawable.vs), // Replace with your drawable resource
+                                    painter = painterResource(id = R.drawable.vs),
                                     contentDescription = "VS",
-                                    modifier = Modifier.size(75.dp) // Adjust size as needed
+                                    modifier = Modifier.size(75.dp)
                                 )
 
                                 // Second Image with texts below
@@ -275,14 +275,14 @@ fun Race(navController: NavController, friendEmail: String) {
                                     horizontalAlignment = Alignment.CenterHorizontally // Center texts under the image
                                 ) {
                                     Image(
-                                        painter = painterResource(id = R.drawable.default_ahh), // Replace with your drawable resource
+                                        painter = painterResource(id = R.drawable.default_ahh),
                                         contentDescription = "Default Ahh",
                                         modifier = Modifier.size(100.dp)
                                             .clip(CircleShape) // Make the image circular
-                                            .border(2.dp, Color(0xff321f12), CircleShape), // Optional border for the circle// Adjust size as needed
+                                            .border(2.dp, Color(0xff321f12), CircleShape),
                                     )
-                                    Text(text = "${friend?.username}", fontSize = 12.sp, color = Color.Black) // First text
-                                    Text(text = "Currently Winning!", fontSize = 12.sp, color = Color.Green) // First text
+                                    Text(text = "${friend?.username}", fontSize = 12.sp, color = Color.Black)
+                                    Text(text = "Currently Winning!", fontSize = 12.sp, color = Color.Green)
                                 }
                             }
 
@@ -355,7 +355,6 @@ fun Race(navController: NavController, friendEmail: String) {
 
                                 Spacer(modifier = Modifier.width(16.dp))
 
-                                // Second button (Another similar button, you can customize the text or action)
                                 Button(
                                     onClick = {
                                         navController.navigate(

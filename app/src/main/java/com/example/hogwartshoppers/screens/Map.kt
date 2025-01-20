@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Paint.Align
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -53,7 +52,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.*
-import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -90,7 +88,6 @@ import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -541,7 +538,7 @@ fun MapScreen(navController: NavController) {
 
                             ) {
                                 Box(
-                                    modifier = Modifier.size(100.dp) // Adjust size as needed
+                                    modifier = Modifier.size(100.dp)
                                 ) {
                                     Image(
                                         painter = painterResource(id = if (curse) R.drawable.background_for_broom_curse else R.drawable.background_for_broom),
