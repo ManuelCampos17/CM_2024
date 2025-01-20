@@ -213,6 +213,34 @@ class RaceViewModel: ViewModel() {
         }
     }
 
+    fun rejectInvite(from: String, to: String, callback: (Boolean) -> Unit) {
+        racesInvitesRef.get().addOnSuccessListener { snapshot ->
+            val invite = snapshot.children.find {
+                it.child("from").value == from && it.child("to").value == to
+            }
+            if (invite != null) {
+                invite.ref.removeValue().addOnCompleteListener {
+                    //change to false the invite of the race
+                    racesRef.get().addOnSuccessListener { snapshot ->
+                        val race = snapshot.children.find {
+                            it.child("userRace").value == from && it.child("friendRace").value == to
+                        }
+                        if (race != null) {
+                            race.ref.child("invite").setValue(false)
+                            race.ref.child("finished").setValue(true)
+                            callback(true)
+                        } else {
+                            callback(false)
+                        }
+                    }
+                }
+            } else {
+                callback(false)
+            }
+        }
+
+    }
+
     // Utility function to handle different types of distance (Long, Int, Double, etc.)
     fun convertToDouble(value: Any?): Double {
         return when (value) {

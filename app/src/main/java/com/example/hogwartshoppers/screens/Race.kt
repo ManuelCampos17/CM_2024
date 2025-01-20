@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -56,6 +57,10 @@ import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -76,6 +81,11 @@ fun Race(navController: NavController, friendEmail: String) {
     var currRace by remember { mutableStateOf<Race?>(null) }
     var markerPosition by remember { mutableStateOf(LatLng(38.757969, -9.155979)) }
 
+    var invitedCondition by remember { mutableStateOf<Boolean?>(null) }
+
+    val db = FirebaseDatabase.getInstance()
+    val racesRef = db.reference.child("Races")
+
     LaunchedEffect(authUser?.email.toString()) {
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
@@ -91,11 +101,54 @@ fun Race(navController: NavController, friendEmail: String) {
                 raceViewModel.getRace(friendEmail, authUser?.email.toString()) { race ->
                     currRace = race
                     markerPosition = LatLng(currRace!!.latitude, currRace!!.longitude)
+
+                    racesRef.addValueEventListener(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            raceViewModel.getRace(friendEmail, authUser?.email.toString()) { race ->
+                                currRace = race
+                                if(currRace?.invite == true) {
+                                    invitedCondition = true
+                                }
+                                else if(currRace?.invite == false) {
+                                    invitedCondition = false
+                                    raceViewModel.deleteRace(friendEmail, authUser?.email.toString()) { success ->
+                                        if (success) {
+                                            Log.d("Rejected", "Rejected invite and deleted race")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        override fun onCancelled(error: DatabaseError) {
+                            Log.d("Race", "Error fetching race: ${error.message}")
+                        }
+                    })
                 }
             }
-            else
+            else {
                 markerPosition = LatLng(currRace!!.latitude, currRace!!.longitude)
-            Log.d("Race currentRace", "Race: $currRace")
+
+                racesRef.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        raceViewModel.getRace(authUser?.email.toString(), friendEmail) { race ->
+                            currRace = race
+                            if (currRace?.invite == true) {
+                                invitedCondition = true
+                            } else if (currRace?.invite == false || currRace == null) {
+                                invitedCondition = false
+                                raceViewModel.deleteRace(authUser?.email.toString(), friendEmail) { success ->
+                                    if (success) {
+                                        Log.d("Rejected", "Rejected invite and deleted race")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.d("Race", "Error fetching race: ${error.message}")
+                    }
+                })
+            }
         }
     }
 
@@ -239,12 +292,13 @@ fun Race(navController: NavController, friendEmail: String) {
                         verticalArrangement = Arrangement.spacedBy(8.dp), // Adds space between buttons
                         horizontalAlignment = Alignment.CenterHorizontally // Centers the buttons horizontally
                     ) {
-                        if(true) {
+                        if(invitedCondition == true) {
                             Spacer(modifier = Modifier.height(14.dp))
 
                             Row(
                                 modifier = Modifier
-                                    .fillMaxWidth(),
+                                    .fillMaxWidth()
+                                    .wrapContentHeight(),
                                 horizontalArrangement = Arrangement.SpaceEvenly, // Space images evenly
                                 verticalAlignment = Alignment.CenterVertically // Align images vertically in the center
                             ) {
@@ -260,7 +314,6 @@ fun Race(navController: NavController, friendEmail: String) {
                                             .border(2.dp, Color(0xff321f12), CircleShape),
                                     )
                                     Text(text = "${currUser?.username}", fontSize = 12.sp, color = Color.Black) // First text
-                                    Text(text = "Currently Losing!", fontSize = 12.sp, color = Color.Red) // First text
                                 }
 
                                 // Second image: "vs"
@@ -282,7 +335,6 @@ fun Race(navController: NavController, friendEmail: String) {
                                             .border(2.dp, Color(0xff321f12), CircleShape),
                                     )
                                     Text(text = "${friend?.username}", fontSize = 12.sp, color = Color.Black)
-                                    Text(text = "Currently Winning!", fontSize = 12.sp, color = Color.Green)
                                 }
                             }
 
@@ -341,9 +393,21 @@ fun Race(navController: NavController, friendEmail: String) {
                                 // First button (Cancel Race)
                                 Button(
                                     onClick = {
+                                        if(currRace?.userRace == authUser?.email.toString())
+                                           raceViewModel.rejectInvite(authUser?.email.toString(), friendEmail) { success ->
+                                               if (success) {
+                                                   Log.d("Rejected", "Rejected invite")
+                                               }
+                                           }
+                                        else {
+                                            raceViewModel.rejectInvite(friendEmail, authUser?.email.toString()) { success ->
+                                                if (success) {
+                                                    Log.d("Rejected", "Rejected invite")
+                                                }
+                                            }
+                                        }
                                         navController.navigate(
-                                            Screens.Friends.route
-                                                .replace(oldValue = "{acceptedRequest}", newValue = "false")
+                                            Screens.HomeScreen.route
                                         )
                                     },
                                     modifier = Modifier
@@ -369,12 +433,38 @@ fun Race(navController: NavController, friendEmail: String) {
                                 }
                             }
                         }
+                        else if(invitedCondition == false) {
+                            Spacer(modifier = Modifier.height(200.dp))
+                            Text(text = "The race is over",
+                                color = Color.Black,
+                                fontSize = 30.sp,
+                                modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
+                            Text(text = "Your friend ended the race, no one wins",
+                                modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
+
+                            Button(
+                                onClick = {
+                                    navController.navigate(
+                                        Screens.HomeScreen.route
+                                    )
+                                },
+                                modifier = Modifier
+                                    .size(135.dp, 35.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b))
+                            ) {
+                                Text("Map")
+                            }
+
+
+                        }
                         else {
                             Spacer(modifier = Modifier.height(200.dp))
                             Text(text = "Waiting for your friend to accept the invite",
                                 color = Color.Black,
-                                fontSize = 30.sp)
-                            Text(text = "The race will start as soon as your friend accepts the invite. Be prepared!")
+                                fontSize = 30.sp,
+                                modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
+                            Text(text = "The race will start as soon as your friend accepts the invite. Be prepared!",
+                                modifier = Modifier.align(Alignment.CenterHorizontally).padding(10.dp))
                         }
                     }
                 }

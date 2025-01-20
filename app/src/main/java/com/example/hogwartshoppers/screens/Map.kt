@@ -114,6 +114,7 @@ fun MapScreen(navController: NavController) {
     var curse by remember { mutableStateOf(false) }
 
     var invited by remember { mutableStateOf(false) }
+    var raceOver by remember { mutableStateOf(false) }
     var whoInvited by remember { mutableStateOf("") }
     var userInvited by remember { mutableStateOf("") }
 
@@ -161,6 +162,7 @@ fun MapScreen(navController: NavController) {
         val db: FirebaseDatabase = FirebaseDatabase.getInstance()
         val magicRef = db.getReference("Magic")
         val invitesRef = db.getReference("Race_Invites")
+        val racesRef = db.getReference("Races")
 
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
             currUser = user // Update currUser with the fetched data
@@ -171,22 +173,44 @@ fun MapScreen(navController: NavController) {
 
                 invitesRef.addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
+
                         // Iterate through the children in "Race_Invites"
                         for (child in snapshot.children) {
                             userInvited = child.child("to").value as String
                             whoInvited = child.child("from").value as String
                             if (userInvited == authUser?.email) {
-                                if(currRace?.invite == null) {
+                                if (currRace?.invite == null) {
                                     invited = true // Update event variable
+                                } else if (currRace?.invite == false) {
+                                    raceOver = true
                                 }
                                 break // Exit the loop once a match is found
                             }
                         }
                     }
-                    override fun onCancelled(error: DatabaseError) {
-                    }
 
+                    override fun onCancelled(error: DatabaseError) {
+                        // Handle errors if necessary
+                    }
                 })
+
+                racesRef.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                            raceViewModel.getOngoingRace(currUser?.email ?: "") { race ->
+                                currRace = race
+                                if (currRace?.finished == true) {
+                                    raceOver = true
+                                }
+                                else {
+                                    raceOver = false
+                                }
+                            }
+                        }
+                    override fun onCancelled(error: DatabaseError) {
+                        // Handle errors if necessary
+                    }
+                })
+
             }
         }
 
@@ -889,7 +913,16 @@ fun MapScreen(navController: NavController) {
                                         }
                                         Spacer(modifier = Modifier.width(16.dp))
 
-                                        Button(onClick = { invited = false },
+                                        Button(
+                                            onClick = {
+                                                raceViewModel.rejectInvite(whoInvited, authUser?.email.toString()) { success ->
+                                                    if (success) {
+                                                        invited = false
+                                                    }
+                                                }
+
+
+                                                         },
                                             colors = ButtonDefaults.buttonColors(if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1)),
                                             shape = RoundedCornerShape(16.dp),
                                         ) {
@@ -975,7 +1008,7 @@ fun MapScreen(navController: NavController) {
                     }
                 }
 
-                if(currRace?.invite == true && currRace?.finished == false) {
+                if(currRace?.invite == true && currRace?.finished == false && raceOver == false) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
