@@ -1,5 +1,6 @@
 package com.example.hogwartshoppers.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -86,9 +87,15 @@ fun Race(navController: NavController, friendEmail: String) {
 
         raceViewModel.getRace(authUser?.email.toString(), friendEmail) { race ->
             currRace = race
-            if (race != null) {
-                markerPosition = LatLng(race.latitude, race.longitude)
+            if (currRace == null) {
+                raceViewModel.getRace(friendEmail, authUser?.email.toString()) { race ->
+                    currRace = race
+                    markerPosition = LatLng(currRace!!.latitude, currRace!!.longitude)
+                }
             }
+            else
+                markerPosition = LatLng(currRace!!.latitude, currRace!!.longitude)
+            Log.d("Race currentRace", "Race: $currRace")
         }
     }
 
@@ -365,10 +372,10 @@ fun Race(navController: NavController, friendEmail: String) {
                         }
                         else {
                             Spacer(modifier = Modifier.height(200.dp))
-                            Text(text = "You are not in a Race!",
+                            Text(text = "Waiting for your friend to accept the invite",
                                 color = Color.Black,
                                 fontSize = 30.sp)
-                            Text(text = "Invite your friends to a race in your friend list!")
+                            Text(text = "The race will start as soon as your friend accepts the invite. Be prepared!")
                         }
                     }
                 }

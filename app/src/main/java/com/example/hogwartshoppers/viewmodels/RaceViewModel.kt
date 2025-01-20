@@ -52,6 +52,29 @@ class RaceViewModel: ViewModel() {
         }
     }
 
+    fun getOngoingRace (user: String, callback: (Race?) -> Unit) {
+        // gets the race with the user as one of the participants and invite as true
+        racesRef.get().addOnSuccessListener { snapshot ->
+            val race = snapshot.children.find {
+                (it.child("userRace").value == user || it.child("friendRace").value == user) && it.child("invite").value == true
+            }
+            if (race != null) {
+                val raceData = Race(
+                    userRace = race.child("userRace").value as String,
+                    friendRace = race.child("friendRace").value as String,
+                    finished = race.child("finished").value as Boolean,
+                    latitude = convertToDouble(race.child("latitude").value),
+                    longitude = convertToDouble(race.child("longitude").value),
+                    time = race.child("time").value as Long,
+                    invite = race.child("invite").value as Boolean?
+                )
+                callback(raceData)
+            } else {
+                callback(null)
+            }
+        }
+    }
+
     fun getRaces(callback: (List<Race>) -> Unit) {
         racesRef.get().addOnSuccessListener { snapshot ->
             val racesList = mutableListOf<Race>()
@@ -164,6 +187,29 @@ class RaceViewModel: ViewModel() {
                 invitesList.add(inviteData)
             }
             callback(invitesList)
+        }
+    }
+
+    fun acceptInvite(from: String, to: String, callback: (Boolean) -> Unit) {
+        racesInvitesRef.get().addOnSuccessListener { snapshot ->
+            val invite = snapshot.children.find {
+                it.child("from").value == from && it.child("to").value == to
+            }
+            if (invite != null) {
+                racesRef.get().addOnSuccessListener { snapshot ->
+                    val race = snapshot.children.find {
+                        it.child("userRace").value == from && it.child("friendRace").value == to
+                    }
+                    if (race != null) {
+                        race.ref.child("invite").setValue(true)
+                        callback(true)
+                    } else {
+                        callback(false)
+                    }
+                }
+            } else {
+                callback(false)
+            }
         }
     }
 

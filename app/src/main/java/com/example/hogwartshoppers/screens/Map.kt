@@ -81,9 +81,11 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.example.hogwartshoppers.R
 import com.example.hogwartshoppers.model.Broom
 import com.example.hogwartshoppers.model.BroomTrip
+import com.example.hogwartshoppers.model.Race
 import com.example.hogwartshoppers.model.User
 import com.example.hogwartshoppers.viewmodels.AudioViewModel
 import com.example.hogwartshoppers.viewmodels.BroomViewModel
+import com.example.hogwartshoppers.viewmodels.RaceViewModel
 import com.example.hogwartshoppers.viewmodels.UserViewModel
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -109,10 +111,14 @@ fun MapScreen(navController: NavController) {
     val userViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
 
+    val raceViewModel: RaceViewModel = viewModel()
+    var currRace by remember { mutableStateOf<Race?>(null) }
+
     var curse by remember { mutableStateOf(false) }
 
     var invited by remember { mutableStateOf(false) }
     var whoInvited by remember { mutableStateOf("") }
+    var userInvited by remember { mutableStateOf("") }
 
     // Pulsing Box logic here
     var sizeState by remember { mutableStateOf(true) }
@@ -159,6 +165,34 @@ fun MapScreen(navController: NavController) {
         val magicRef = db.getReference("Magic")
         val invitesRef = db.getReference("Race_Invites")
 
+        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
+            currUser = user // Update currUser with the fetched data
+
+            //get ongoing race with authuser
+            raceViewModel.getOngoingRace(currUser?.email ?: "") { race ->
+                currRace = race
+
+                invitesRef.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        // Iterate through the children in "Race_Invites"
+                        for (child in snapshot.children) {
+                            userInvited = child.child("to").value as String
+                            whoInvited = child.child("from").value as String
+                            if (userInvited == authUser?.email) {
+                                if(currRace?.invite == null) {
+                                    invited = true // Update event variable
+                                }
+                                break // Exit the loop once a match is found
+                            }
+                        }
+                    }
+                    override fun onCancelled(error: DatabaseError) {
+                    }
+
+                })
+            }
+        }
+
         magicRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 // Iterate through the children in "Magic"
@@ -174,27 +208,6 @@ fun MapScreen(navController: NavController) {
                 Log.d("Magic", "Error fetching magic: ${error.message}")
             }
         })
-
-        invitesRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                // Iterate through the children in "Race_Invites"
-                for (child in snapshot.children) {
-                    val toValue = child.child("to").value as? String
-                    if (toValue == authUser?.email) {
-                        invited = true // Update event variable
-                        whoInvited = child.child("from").value as String
-                        break // Exit the loop once a match is found
-                    }
-                }
-            }
-            override fun onCancelled(error: DatabaseError) {
-            }
-
-        })
-
-        userViewModel.getUserInfo(authUser?.email.toString()) { user ->
-            currUser = user // Update currUser with the fetched data
-        }
     }
 
     val context = LocalContext.current
@@ -662,7 +675,10 @@ fun MapScreen(navController: NavController) {
                         verticalArrangement = Arrangement.Top
                     ) {
                         Box(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(offsetCurse)
+
                         ) {
                             if (url != null) {
                                 Button(
@@ -697,10 +713,12 @@ fun MapScreen(navController: NavController) {
                                     },
                                     modifier = Modifier.align(Alignment.TopEnd),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xff321f12),
-                                    )
+                                        containerColor = if (curse) Color(0xff324e3b) else Color(0xff321f12),
+                                    ),
+                                    shape = RoundedCornerShape(16.dp)
                                 ) {
-                                    Text(text = if (isPlaying) "Pause Broom Lore" else "Play Broom Lore")
+                                    Text(text = if (isPlaying) "Pause Broom Lore" else "Play Broom Lore",
+                                        modifier = Modifier.padding(top = 10.dp, bottom = 10.dp))
                                 }
                             } else {
                                 Log.e("AudioViewModel", "No URL found for broomName: ${currTrip?.broomName}")
@@ -817,6 +835,78 @@ fun MapScreen(navController: NavController) {
                             }
                         }
                     }
+
+                    if(invited) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .offset(x = offsetCurse)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .padding(16.dp)
+                                    .offset(y = (90).dp)
+                                    .background(color = if (curse) Color(0xff324e3b) else Color(0xff321f12),
+                                        shape = RoundedCornerShape(16.dp))
+
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(16.dp),
+                                ) {
+                                    var name by remember { mutableStateOf("") }
+                                    userViewModel.getUserInfo(whoInvited) { user ->
+                                        name = user?.username ?: ""
+                                    }
+                                    Text(text = "You have received an invite to a race from $name",
+                                        color = Color.White,
+                                        fontSize = 20.sp,
+                                        modifier = Modifier.align(Alignment.CenterHorizontally))
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 16.dp, end = 16.dp, top = 16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                raceViewModel.acceptInvite(whoInvited, authUser?.email.toString()) { success ->
+                                                    if (success) {
+                                                        invited = false
+                                                        navController.navigate("race_screen/${whoInvited}")
+                                                    }
+                                                }
+                                                      },
+                                            colors = ButtonDefaults.buttonColors(if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1)),
+                                            shape = RoundedCornerShape(16.dp),
+                                        ) {
+                                            Text(text = "Accept",
+                                                color = Color(0xff321f12),
+                                                fontSize = 18.sp,
+                                                modifier = Modifier.padding(5.dp))
+                                        }
+                                        Spacer(modifier = Modifier.width(16.dp))
+
+                                        Button(onClick = { invited = false },
+                                            colors = ButtonDefaults.buttonColors(if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1)),
+                                            shape = RoundedCornerShape(16.dp),
+                                        ) {
+                                            Text(
+                                                text = "Decline",
+                                                color = Color(0xff321f12),
+                                                fontSize = 18.sp,
+                                                modifier = Modifier.padding(5.dp))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Box(
@@ -884,6 +974,47 @@ fun MapScreen(navController: NavController) {
                                     fontSize = 16.sp
                                 )
                             }
+                        }
+                    }
+                }
+
+                if(currRace?.invite == true && currRace?.finished == false) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset(x = offsetCurse)
+                    ) {
+                        Box(modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(
+                                end = 85.dp,
+                                bottom = if (hasTrip == true) 220.dp else 20.dp // Adjust position when hasTrip is true
+                            )
+                            .background(
+                                color = if (curse) Color(0xff324e3b) else Color(0xff321f12),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .padding(horizontal = 5.dp, vertical = 5.dp)
+                            .size(42.dp)
+                            .clickable {
+                                if(currUser?.email == whoInvited) {
+                                    Log.d(userInvited, "userInvited")
+                                    Log.d(whoInvited, "whoInvited")
+                                    navController.navigate("race_screen/$userInvited")
+                                }
+                                else {
+                                    Log.d(userInvited, "userInvited")
+                                    Log.d(whoInvited, "whoInvited")
+                                    navController.navigate("race_screen/${whoInvited}")
+                                }
+                            },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.race_logo), // Background image
+                                contentDescription = "Broom Image",
+                                modifier = Modifier.fillMaxSize() // Fills the Box
+                            )
                         }
                     }
                 }
