@@ -20,9 +20,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -210,6 +214,7 @@ fun ForumScreen(navController: NavController) {
                     .background(Color(0xff321f12))
                     .border(3.dp, Color(0xFFBB9753))
                     .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.hogwartslogo),
@@ -247,8 +252,7 @@ fun ForumScreen(navController: NavController) {
                     // Tab Switcher Row
                     Box(
                         modifier = Modifier
-                            .size(350.dp, 60.dp)
-                            .padding(bottom = 16.dp)
+                            .size(350.dp, 50.dp)
                             .background(
                                 color = Color(0xff321f12), // Background color for unselected area
                                 shape = RoundedCornerShape(16.dp)
@@ -258,7 +262,7 @@ fun ForumScreen(navController: NavController) {
                         Box(
                             modifier = Modifier
                                 .offset(x = switchPosition)
-                                .size(150.dp, 60.dp) // Match button sizes
+                                .size(150.dp, 50.dp) // Match button sizes
                                 .background(
                                     color = Color(0xffBB9753), // Highlight color for the selected tab
                                     shape = RoundedCornerShape(16.dp)
@@ -269,7 +273,7 @@ fun ForumScreen(navController: NavController) {
                             onClick = { selectedTab = "All Posts" },
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .size(150.dp, 40.dp),
+                                .size(150.dp, 50.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = if (selectedTab != "My Posts") ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753))
                             else ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b)),
@@ -286,7 +290,7 @@ fun ForumScreen(navController: NavController) {
                             onClick = { selectedTab = "My Posts" },
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .size(150.dp, 60.dp),
+                                .size(150.dp, 50.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = if (selectedTab == "My Posts") ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753))
                             else ButtonDefaults.buttonColors(containerColor = Color(0xff4b2f1b)),
@@ -300,10 +304,27 @@ fun ForumScreen(navController: NavController) {
                         }
                     }
 
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        // Button to trigger the pop-up
+                        Button(
+                            onClick = { showDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(text = "Create Post", color = Color.White)
+                        }
+                    }
+
                     // Content Box
                     Box(
                         modifier = Modifier
-                            .size(350.dp, 500.dp)
+                            .width(350.dp)
+                            .wrapContentHeight()
                             .background(Color(0xff4b2f1b), shape = RoundedCornerShape(16.dp))
                             .padding(16.dp)
                     ) {
@@ -311,26 +332,23 @@ fun ForumScreen(navController: NavController) {
 
                             if (allPosts.isNullOrEmpty())
                                 Text(
-                                    text = "Loading...",
+                                    text = "There are no posts yet!",
                                     color = Color.White,
                                     modifier = Modifier.fillMaxSize()
                                         .align(Alignment.Center))
                             else {
-                                LazyColumn(
+                                Column(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    // Using count
-                                    allPosts?.let {
-                                        items(it.size) { index ->
-                                            PostBox(
-                                                userMail = authUser?.email.toString(),
-                                                userEmail =it[index].userEmail,
-                                                title = it[index].title,
-                                                text = it[index].text,
-                                                navController = navController
-                                            )
-                                        }
+                                    allPosts?.forEach { post ->
+                                        PostBox(
+                                            userMail = authUser?.email.toString(),
+                                            userEmail = post.userEmail,
+                                            title = post.title,
+                                            text = post.text,
+                                            navController = navController
+                                        )
                                     }
                                 }
                             }
@@ -344,40 +362,21 @@ fun ForumScreen(navController: NavController) {
                                         .align(Alignment.Center)
                                 )
                             } else {
-                                LazyColumn(
+                                Column(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    // Using count
-                                    myPosts?.let {
-                                        items(it.size) { index ->
-                                            PostBox(
-                                                userMail = authUser?.email.toString(),
-                                                userEmail =it[index].userEmail,
-                                                title = it[index].title,
-                                                text = it[index].text,
-                                                navController = navController
-                                            )
-                                        }
+                                    myPosts?.forEach { post ->
+                                        PostBox(
+                                            userMail = authUser?.email.toString(),
+                                            userEmail = post.userEmail,
+                                            title = post.title,
+                                            text = post.text,
+                                            navController = navController
+                                        )
                                     }
                                 }
                             }
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp)
-                    ) {
-                        // Button to trigger the pop-up
-                        Button(
-                            onClick = { showDialog = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xffBB9753)),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Text(text = "Create Post", color = Color.White)
                         }
                     }
 
