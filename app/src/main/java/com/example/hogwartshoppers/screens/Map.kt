@@ -300,11 +300,14 @@ fun MapScreen(navController: NavController) {
 
                     locationResult.locations.lastOrNull()?.let { location ->
                         val currentLocation = LatLng(location.latitude, location.longitude)
+                        userLocation = currentLocation
+
                         if (previousLocation != null) {
                             totalDistance += calculateDistance(previousLocation!!, currentLocation)
 
                             editor.putFloat("totalDistance", totalDistance.toFloat()).apply()
                         }
+
                         previousLocation = currentLocation
                     }
 
@@ -517,13 +520,17 @@ fun MapScreen(navController: NavController) {
                         object : LocationCallback() {
                             override fun onLocationResult(locationResult: LocationResult) {
                                 super.onLocationResult(locationResult)
+
                                 locationResult.locations.lastOrNull()?.let { location ->
                                     val currentLocation = LatLng(location.latitude, location.longitude)
+                                    userLocation = currentLocation
+
                                     if (previousLocation != null) {
                                         totalDistance += calculateDistance(previousLocation!!, currentLocation)
 
                                         editor.putFloat("totalDistance", totalDistance.toFloat()).apply()
                                     }
+
                                     previousLocation = currentLocation
                                 }
 
@@ -1483,6 +1490,12 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm:
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(userLocation, 17f)
+    }
+
+    LaunchedEffect(userLocation) {
+        cameraPositionState.animate(
+            CameraUpdateFactory.newLatLngZoom(userLocation, 17f)
+        )
     }
 
     val context = LocalContext.current
