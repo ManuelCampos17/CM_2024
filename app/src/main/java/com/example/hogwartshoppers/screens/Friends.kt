@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -418,13 +418,13 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
                             } else {
                                 // Display friend requests list when "Friend Requests" tab is selected
                                 friendRequests?.let { requests ->
-                                    LazyColumn(
+                                    Column(
                                         modifier = Modifier.fillMaxSize(),
                                         verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
-                                        items(requests.size) { index ->
+                                        requests.forEach { requestEmail ->
                                             FriendRequestItem(
-                                                requestEmail = requests[index],
+                                                requestEmail = requestEmail,
                                                 navController = navController,
                                                 userViewModel = userViewModel,
                                                 email = authUser?.email.toString(),

@@ -43,7 +43,8 @@ class RaceViewModel: ViewModel() {
                     latitude = convertToDouble(race.child("latitude").value),
                     longitude = convertToDouble(race.child("longitude").value),
                     time = race.child("time").value as Long,
-                    invite = race.child("invite").value as Boolean?
+                    invite = race.child("invite").value as Boolean?,
+                    winner = race.child("winner").value as String?
                 )
                 callback(raceData)
             } else {
@@ -66,7 +67,8 @@ class RaceViewModel: ViewModel() {
                     latitude = convertToDouble(race.child("latitude").value),
                     longitude = convertToDouble(race.child("longitude").value),
                     time = race.child("time").value as Long,
-                    invite = race.child("invite").value as Boolean?
+                    invite = race.child("invite").value as Boolean?,
+                    winner = race.child("winner").value as String?
                 )
                 callback(raceData)
             } else {
@@ -86,7 +88,8 @@ class RaceViewModel: ViewModel() {
                         latitude = convertToDouble(raceSnapshot.child("latitude").value),
                         longitude = convertToDouble(raceSnapshot.child("longitude").value),
                         time = raceSnapshot.child("time").value as Long,
-                        invite = raceSnapshot.child("invite").value as Boolean?
+                        invite = raceSnapshot.child("invite").value as Boolean?,
+                        winner = raceSnapshot.child("winner").value as String?
                     )
                     racesList.add(raceData)
                 }
@@ -123,7 +126,8 @@ class RaceViewModel: ViewModel() {
                 latitude = 0.0,
                 longitude = 0.0,
                 time = 0,
-                invite = null
+                invite = null,
+                winner = null
             )
             racesRef.push().setValue(race).addOnCompleteListener {
                 callback(it.isSuccessful)
@@ -132,17 +136,40 @@ class RaceViewModel: ViewModel() {
     }
 
     fun deleteRace(user: String, friend: String, callback: (Boolean) -> Unit) {
+//        racesRef.get().addOnSuccessListener { snapshot ->
+//            val race = snapshot.children.find {
+//                it.child("userRace").value == user && it.child("friendRace").value == friend
+//            }
+//            if (race != null) {
+//                race.ref.removeValue().addOnCompleteListener {
+//                    callback(it.isSuccessful)
+//                }
+//            } else {
+//                callback(false)
+//            }
+//        }
+
         racesRef.get().addOnSuccessListener { snapshot ->
-            val race = snapshot.children.find {
-                it.child("userRace").value == user && it.child("friendRace").value == friend
-            }
-            if (race != null) {
-                race.ref.removeValue().addOnCompleteListener {
-                    callback(it.isSuccessful)
+            if (snapshot.exists() && snapshot.hasChildren()) {
+                var removed = false
+
+                snapshot.children.forEach { child ->
+                    val userRace = child.child("userRace").value as? String
+                    val friendsRace = child.child("friendRace").value as? String
+
+                    if (userRace == user && friendsRace == friend) {
+                        // Remove the matching child
+                        child.ref.removeValue()
+                        removed = true
+                    }
                 }
+
+                callback(removed)
             } else {
                 callback(false)
             }
+        }.addOnFailureListener { error ->
+            Log.d("Magic", "Failed to remove curse: ${error.message}")
         }
     }
 
@@ -156,6 +183,22 @@ class RaceViewModel: ViewModel() {
                 race.ref.child("longitude").setValue(longitude)
                 Log.d("updateCoordsRace", "Latitude: $latitude, Longitude: $longitude")
                 Log.d("race lat and long", "${race.child("latitude").value} ${race.child("longitude").value}")
+                callback(true)
+            } else {
+                callback(false)
+            }
+        }
+    }
+
+    fun finishRace(user: String, friend: String, winner: String, callback: (Boolean) -> Unit) {
+        racesRef.get().addOnSuccessListener { snapshot ->
+            val race = snapshot.children.find {
+                it.child("userRace").value == user && it.child("friendRace").value == friend
+            }
+            if (race != null) {
+                race.ref.child("finished").setValue(true)
+                race.ref.child("winner").setValue(winner)
+
                 callback(true)
             } else {
                 callback(false)
@@ -238,7 +281,28 @@ class RaceViewModel: ViewModel() {
                 callback(false)
             }
         }
+    }
 
+    fun removeRaceInvite(fromEmail: String, toEmail: String, callback: (Boolean) -> Unit) {
+        val invitesRef = FirebaseDatabase.getInstance().getReference("Race_Invites")
+
+        invitesRef.orderByChild("from").equalTo(fromEmail).get()
+            .addOnSuccessListener { snapshot ->
+                for (invite in snapshot.children) {
+                    val toValue = invite.child("to").getValue(String::class.java)
+                    if (toValue == toEmail) {
+                        invite.ref.removeValue()
+                        Log.d("Firebase", "Invite removed successfully")
+                        callback(true)
+                    }
+                }
+                Log.d("Firebase", "No matching invite found")
+            }
+            .addOnFailureListener { error ->
+                Log.e("Firebase", "Failed to remove invite: ${error.message}")
+            }
+
+        callback(false)
     }
 
     // Utility function to handle different types of distance (Long, Int, Double, etc.)

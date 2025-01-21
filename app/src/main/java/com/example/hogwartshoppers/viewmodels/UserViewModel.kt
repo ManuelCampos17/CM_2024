@@ -220,20 +220,29 @@ class UserViewModel: ViewModel(){
 
 
     // função para atualizar a house
-    fun updateUserRecords(email: String, records: Int){
-        // Query the database to find the user with the matching email
+    fun updateUserRecords(email: String){
+        var stop = false
+
         usersRef.orderByChild("email").equalTo(email).get().addOnSuccessListener { snapshot ->
             if (snapshot.exists()) {
                 for (userSnapshot in snapshot.children) {
-                    // Update the username for the matching user
-                    userSnapshot.ref.child("records").setValue(records)
+                    if (!stop) {
+                        val recordsRef = userSnapshot.ref.child("records")
+
+                        recordsRef.get().addOnSuccessListener { recordSnapshot ->
+                            val currentRecords = recordSnapshot.getValue(Int::class.java) ?: 0
+                            recordsRef.setValue(currentRecords + 1)
+
+                            stop = true
+                        }.addOnFailureListener { e ->
+                            Log.e("Firebase", "Error reading records: ${e.message}")
+                        }
+                    }
                 }
             } else {
-                // Handle case where no user is found with the provided email
                 Log.e("Firebase", "No user found with email: $email")
             }
         }.addOnFailureListener { exception ->
-            // Handle any errors that occur while querying the database
             Log.e("Firebase", "Error querying user: ${exception.message}")
         }
     }

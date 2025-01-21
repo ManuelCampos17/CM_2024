@@ -37,9 +37,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -112,6 +114,9 @@ fun MapScreen(navController: NavController) {
     var currRace by remember { mutableStateOf<Race?>(null) }
 
     var curse by remember { mutableStateOf(false) }
+
+    var showDialogEndRaceWin by remember { mutableStateOf(false) }
+    var showDialogEndRaceLose by remember { mutableStateOf(false) }
 
     var invited by remember { mutableStateOf(false) }
     var raceOver by remember { mutableStateOf(false) }
@@ -199,6 +204,14 @@ fun MapScreen(navController: NavController) {
                             raceViewModel.getOngoingRace(currUser?.email ?: "") { race ->
                                 currRace = race
                                 if (currRace?.finished == true) {
+                                    if (currRace!!.winner == authUser?.email.toString()) {
+                                        userViewModel.updateUserRecords(authUser?.email.toString())
+                                        showDialogEndRaceWin = true
+                                    }
+                                    else {
+                                        showDialogEndRaceLose= true
+                                    }
+
                                     raceOver = true
                                 }
                                 else {
@@ -247,6 +260,13 @@ fun MapScreen(navController: NavController) {
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
     var selectedMarker by remember { mutableStateOf<Broom?>(null) }
 
+    val sharedPreferences = context.getSharedPreferences("TimerPrefs", Context.MODE_PRIVATE)
+    var totalDistance by remember {
+        mutableStateOf(sharedPreferences.getFloat("totalDistance", 0f).toDouble())
+    }
+    var previousLocation: LatLng? by remember { mutableStateOf(null) }
+    val editor = sharedPreferences.edit()
+
     // Check and request location permissions
     LaunchedEffect(Unit) {
         if (ActivityCompat.checkSelfPermission(
@@ -278,6 +298,16 @@ fun MapScreen(navController: NavController) {
                     val newLocation = locationResult.lastLocation
                     val currentTime = System.currentTimeMillis()
 
+                    locationResult.locations.lastOrNull()?.let { location ->
+                        val currentLocation = LatLng(location.latitude, location.longitude)
+                        if (previousLocation != null) {
+                            totalDistance += calculateDistance(previousLocation!!, currentLocation)
+
+                            editor.putFloat("totalDistance", totalDistance.toFloat()).apply()
+                        }
+                        previousLocation = currentLocation
+                    }
+
                     if (lastLocation != null && newLocation != null) {
                         val distance = lastLocation!!.distanceTo(newLocation) // Distance in meters
                         val timeElapsed = (currentTime - lastTime) / 1000f // Time in seconds
@@ -286,6 +316,26 @@ fun MapScreen(navController: NavController) {
 
                     lastLocation = newLocation
                     lastTime = currentTime
+
+                    if (currRace != null) {
+                        if (!currRace!!.finished) {
+                            if (lastLocation?.let { hasUserReachedTarget(it.latitude, it.longitude, currRace!!.latitude, currRace!!.longitude, 5f) } == true) {
+                                raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, authUser?.email.toString()) { ret ->
+                                    if (ret) {
+                                        if (currRace!!.winner == authUser?.email.toString()) {
+                                            userViewModel.updateUserRecords(authUser?.email.toString())
+                                            showDialogEndRaceWin = true
+                                        }
+                                        else {
+                                            showDialogEndRaceLose = true
+                                        }
+
+                                        raceOver = true
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -436,6 +486,7 @@ fun MapScreen(navController: NavController) {
                             broomVm = BroomViewModel(),
                             hasTrip = it,
                             curse = curse,
+                            race = currRace,
                             offsetCurse = offsetCurse
                         )
                     }
@@ -454,17 +505,11 @@ fun MapScreen(navController: NavController) {
                 }
 
                 if (hasTrip == true) {
-                    val sharedPreferences = context.getSharedPreferences("TimerPrefs", Context.MODE_PRIVATE)
-                    val editor = sharedPreferences.edit()
 
                     var startTime by remember {
                         mutableStateOf(sharedPreferences.getLong("startTime", -1L))
                     }
                     var timer by remember { mutableStateOf(0L) }
-                    var totalDistance by remember {
-                        mutableStateOf(sharedPreferences.getFloat("totalDistance", 0f).toDouble())
-                    }
-                    var previousLocation: LatLng? by remember { mutableStateOf(null) }
                     val coroutineScope = rememberCoroutineScope()
 
                     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -480,6 +525,26 @@ fun MapScreen(navController: NavController) {
                                         editor.putFloat("totalDistance", totalDistance.toFloat()).apply()
                                     }
                                     previousLocation = currentLocation
+                                }
+
+                                if (currRace != null) {
+                                    if (!currRace!!.finished) {
+                                        if (lastLocation?.let { hasUserReachedTarget(it.latitude, it.longitude, currRace!!.latitude, currRace!!.longitude, 5f) } == true) {
+                                            raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, authUser?.email.toString()) { ret ->
+                                                if (ret) {
+                                                    if (currRace!!.winner == authUser?.email.toString()) {
+                                                        userViewModel.updateUserRecords(authUser?.email.toString())
+                                                        showDialogEndRaceWin = true
+                                                    }
+                                                    else {
+                                                        showDialogEndRaceLose = true
+                                                    }
+
+                                                    raceOver = true
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -831,6 +896,24 @@ fun MapScreen(navController: NavController) {
                                                         Log.e("LocationError", "Failed to get location")
                                                     }
                                                 }
+
+                                                if (currRace != null) {
+                                                    if (!currRace!!.finished) {
+                                                        raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, currRace!!.friendRace) { ret ->
+                                                            if (ret) {
+                                                                if (currRace!!.winner == authUser?.email.toString()) {
+                                                                    userViewModel.updateUserRecords(authUser?.email.toString())
+                                                                    showDialogEndRaceWin = true
+                                                                }
+                                                                else {
+                                                                    showDialogEndRaceLose = true
+                                                                }
+
+                                                                raceOver = true
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
 
@@ -846,7 +929,6 @@ fun MapScreen(navController: NavController) {
                                 }
                             }
                         }
-
 
                         ShakeDetector { shaken ->
                             if (shaken) {
@@ -936,6 +1018,83 @@ fun MapScreen(navController: NavController) {
                                 }
                             }
                         }
+                    }
+
+                    if (showDialogEndRaceWin) {
+                        Thread.sleep(2000)
+
+                        currRace?.let { race ->
+                            raceViewModel.deleteRace(race.userRace, race.friendRace) { }
+                        }
+
+                        AlertDialog(
+                            onDismissRequest = { showDialogEndRaceWin = false
+                                               showDialogEndRaceLose = false},
+                            containerColor = Color(0xFF3B2A1A),
+                            shape = RoundedCornerShape(16.dp),
+                            title = {
+                                Text(
+                                    text = "YOU WON THE RACE",
+                                    color = Color.White,
+                                    maxLines = 1
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        showDialogEndRaceWin = false
+                                        showDialogEndRaceLose = false
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFD7B98E),
+                                        contentColor = Color.Black
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.align(Alignment.Center)
+                                ) {
+                                    Text(text = "Close")
+                                }
+                            },
+                            modifier = Modifier.wrapContentWidth()
+                        )
+                    } else if (showDialogEndRaceLose) {
+                        Thread.sleep(2000)
+
+                        currRace?.let { race ->
+                            raceViewModel.removeRaceInvite(race.userRace, race.friendRace) { }
+                            raceViewModel.deleteRace(race.userRace, race.friendRace) { }
+                        }
+
+                        AlertDialog(
+                            onDismissRequest = { showDialogEndRaceWin = false
+                                                showDialogEndRaceLose = false},
+                            containerColor = Color(0xFF3B2A1A),
+                            shape = RoundedCornerShape(16.dp),
+                            title = {
+                                Text(
+                                    text = "YOU LOST THE RACE",
+                                    color = Color.White,
+                                    maxLines = 1
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        showDialogEndRaceLose = false
+                                        showDialogEndRaceWin = false
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFD7B98E),
+                                        contentColor = Color.Black
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.align(Alignment.Center)
+                                ) {
+                                    Text(text = "Close")
+                                }
+                            },
+                            modifier = Modifier.wrapContentWidth()
+                        )
                     }
                 }
 
@@ -1287,7 +1446,7 @@ fun convertToDouble(value: Any?): Double {
 }
 
 @Composable
-fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm: BroomViewModel, hasTrip: Boolean, curse: Boolean, offsetCurse: Dp) {
+fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm: BroomViewModel, hasTrip: Boolean, curse: Boolean, race: Race?, offsetCurse: Dp) {
     // Define marker locations close to the user's location
     val markerLocations = remember { mutableStateOf<List<Broom>>(emptyList()) }
 
@@ -1362,6 +1521,23 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm:
                         println("No brooms found or an error occurred.")
                     }
                 }
+            }
+
+            if (race != null && !race.finished) {
+                val customIconRace = remember {
+                    getScaledMarkerIcon(
+                        context = context,
+                        drawableId = R.drawable.race_finish,
+                        width = 100,
+                        height = 100
+                    )
+                }
+
+                Marker(
+                    state = MarkerState(position = LatLng(race.latitude, race.longitude)),
+                    icon = customIconRace,
+                    title = "Finish Line",
+                )
             }
 
             if (!hasTrip) {
@@ -1454,5 +1630,21 @@ fun ShowGoogleMap(userLocation: LatLng, onMarkerClick: (Broom) -> Unit, broomVm:
             }
         }
     }
+}
+
+fun hasUserReachedTarget(userLat: Double, userLng: Double, targetLat: Double, targetLng: Double, radiusMeters: Float): Boolean {
+    val userLocation = Location("").apply {
+        latitude = userLat
+        longitude = userLng
+    }
+
+    val targetLocation = Location("").apply {
+        latitude = targetLat
+        longitude = targetLng
+    }
+
+    val distance = userLocation.distanceTo(targetLocation)  // Distance in meters
+
+    return distance <= radiusMeters
 }
 

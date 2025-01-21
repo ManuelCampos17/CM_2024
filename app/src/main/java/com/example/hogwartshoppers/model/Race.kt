@@ -10,5 +10,6 @@ data class Race(
     val latitude: Double,
     val longitude: Double,
     val time: Long,
-    val invite: Boolean?
+    val invite: Boolean?,
+    val winner: String?
 )
