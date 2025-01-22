@@ -85,28 +85,28 @@ class BroomViewModel: ViewModel() {
     }
 
     // function to update the distance of a broom
-    // Updates distance
     fun updateDistanceBroom(distance: Double, name: String) {
         broomsRef.orderByChild("Name").equalTo(name)
-            .limitToFirst(1) // Stops once it finds the first match
+            .limitToFirst(1)
             .get()
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
-                    val broomKey = snapshot.children.first().key
-                    val currentDistance = convertToDouble(snapshot.child("Distance").value)
-                    // Calculate the new distance by summing the old and new distances
-                    val newDistance = currentDistance + distance
+
+                    val broomSnapshot = snapshot.children.first()
+                    val broomKey = broomSnapshot.key
+                    val currentDistance = broomSnapshot.child("Distance").value
+                    val distanceValue = convertToDouble(currentDistance ?: 0.0)
+
                     broomKey?.let {
-                        broomsRef.child(it).child("Distance").setValue(newDistance)
+                        // Update the Distance field for the broom
+                        broomsRef.child(it).child("Distance").setValue(distanceValue + distance)
                     }
                 } else {
                     Log.e("Firebase", "Broom with name $name not found.")
                 }
             }
-            .addOnFailureListener { error ->
-                Log.e("Firebase", "Error updating distance: ${error.message}")
-            }
     }
+
 
     // funcao para verificar se uma broom está available
     fun checkAvailable(name: String, callback: (Boolean) -> Unit) {
@@ -402,31 +402,6 @@ class BroomViewModel: ViewModel() {
             callback(null)
             Log.e("FirebaseError", "Error fetching trips for user $userEmail", exception)
         }
-    }
-
-    // funcao para verificar se um user esta a andar
-    fun isUserRiding(userEmail: String, callback: (Boolean) -> Unit) {
-        tripsRef.child(userEmail.replace(".", "|"))
-            .orderByKey()
-            .limitToLast(1)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val lastId = snapshot.children.firstOrNull()?.key
-                if (lastId != null) {
-                    // Fetch the last trip
-                    val tripRef = tripsRef.child(userEmail.replace(".", "|")).child(lastId)
-                    tripRef.get().addOnSuccessListener { tripSnapshot ->
-                        val active = tripSnapshot.child("active").getValue(Boolean::class.java) ?: false
-                        callback(active)
-                    }
-                } else {
-                    // No trips found, return false
-                    callback(false)
-                }
-            }
-            .addOnFailureListener {
-                callback(false)
-            }
     }
 
     // get last broom trip

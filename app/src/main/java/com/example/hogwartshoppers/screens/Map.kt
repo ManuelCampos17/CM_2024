@@ -608,187 +608,6 @@ fun MapScreen(navController: NavController) {
                         String.format("%02d:%02d:%02d", hours, minutes, seconds)
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .offset(x = offsetCurse) // Apply the shake offset
-                    ) {
-                        // Background to intercept clicks
-                        Box(
-                            modifier = Modifier.fillMaxSize()
-                        )
-
-                        // Overlay content
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(16.dp)
-                                .background(
-                                    color = if (curse) Color(0xff324e3b) else Color(0xff321f12), // Brown background
-                                    shape = RoundedCornerShape(16.dp) // Rounded corners
-                                )
-                                .padding(16.dp)
-                                .fillMaxWidth()
-                                .height(160.dp)
-                        ) {
-                            // Broom details
-                            currTrip?.let {
-                                Text(
-                                    text = it.broomName,
-                                    color = Color.White,
-                                    fontSize = 28.sp,
-                                    modifier = Modifier
-                                        .padding(bottom = 8.dp)
-                                        .align(Alignment.TopCenter)
-                                )
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .padding(top = 32.dp)
-                                    .fillMaxWidth(),
-
-                            ) {
-                                Box(
-                                    modifier = Modifier.size(100.dp)
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = if (curse) R.drawable.background_for_broom_curse else R.drawable.background_for_broom),
-                                        contentDescription = "Broom Background",
-                                        modifier = Modifier.fillMaxSize(),
-                                    )
-
-                                    Image(
-                                        painter = painterResource(id = R.drawable.nimbus_2000), // Overlay image
-                                        contentDescription = "Broom Overlay",
-                                        modifier = Modifier
-                                            .size(90.dp) // Overlay image size
-                                            .align(Alignment.Center) // Center over the background
-                                    )
-                                }
-
-                                // Details section (time and distance)
-                                Column {
-                                    // Time Row
-                                    Row(
-                                        horizontalArrangement = Arrangement.Start
-                                    ) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.time_trip),
-                                            contentDescription = "Time Trip Logo",
-                                            modifier = Modifier
-                                                .size(40.dp) // Adjust icon size
-                                                .padding(start = 16.dp, end = 4.dp)
-                                                .align(Alignment.CenterVertically)
-                                        )
-                                        Text(
-                                            text = formattedTime,
-                                            color = Color.White,
-                                            fontSize = 18.sp, // Adjust text size as needed
-                                            modifier = Modifier.align(Alignment.CenterVertically)
-                                        )
-                                    }
-
-                                    // Distance Row
-                                    Row(
-                                        horizontalArrangement = Arrangement.Start,
-                                        modifier = Modifier.offset(y = (-12).dp)
-                                    ) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.m_logo),
-                                            contentDescription = "Distance Logo",
-                                            modifier = Modifier
-                                                .size(40.dp)
-                                                .padding(start = 16.dp, end = 4.dp)
-                                                .align(Alignment.CenterVertically)
-                                        )
-                                        Text(
-                                            text = String.format("%.1f", totalDistance),
-                                            color = Color.White,
-                                            fontSize = 18.sp,
-                                            modifier = Modifier.align(Alignment.CenterVertically)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        // Finish Trip button
-                        Button(
-                            onClick = {
-
-                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-
-                                try {
-                                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                                        if (location != null) {
-                                            userLocation = LatLng(location.latitude, location.longitude)
-
-                                            // Move this inside to ensure userLocation is updated before calling endTrip
-                                            viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
-                                                if (ret) {
-                                                    hasTrip = false
-
-                                                    // Clear the start time and reset the timer
-                                                    editor.remove("startTime").apply()
-                                                    startTime = -1L
-                                                    timer = 0L
-
-                                                    totalDistance = 0.0
-                                                    previousLocation = null
-                                                    editor.putFloat("totalDistance", 0f).apply()
-
-                                                    navController.navigate(Screens.Camera.route)
-                                                }
-                                            }
-                                        } else {
-                                            Log.e("LocationError", "Failed to get location")
-                                        }
-                                    }
-                                } catch (e: SecurityException) {
-                                    Log.e("LocationScreen", "Permission denied or revoked: ${e.message}")
-                                }
-
-                                if (currRace != null) {
-                                    if (!currRace!!.finished) {
-                                        raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, currRace!!.friendRace) { ret ->
-                                            if (ret) {
-                                                if (currRace!!.winner == authUser?.email.toString()) {
-                                                    userViewModel.updateUserRecords(authUser?.email.toString())
-                                                    showDialogEndRaceWin = true
-                                                }
-                                                else {
-                                                    showDialogEndRaceLose = true
-                                                }
-
-                                                raceOver = true
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 16.dp)
-                                .offset(y = (-16).dp)
-                                .background(
-                                    color = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1),
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(
-                                        16.dp
-                                    )
-                                ),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1) // Match image color
-                            )
-                        ) {
-                            Text(
-                                text = "Finish Trip",
-                                color = Color(0xFF321F12),
-                                fontSize = 18.sp,
-                            )
-                        }
-                    }
-
                     //AUDIOPLAYER
                     val audioViewModel = AudioViewModel()
                     var url by remember { mutableStateOf<String?>(null) }
@@ -985,6 +804,187 @@ fun MapScreen(navController: NavController) {
                                 userViewmodel.removeCurse(authUser?.email.toString())
                                 curse = false
                             }
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset(x = offsetCurse) // Apply the shake offset
+                    ) {
+                        // Background to intercept clicks
+                        Box(
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        // Overlay content
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(16.dp)
+                                .background(
+                                    color = if (curse) Color(0xff324e3b) else Color(0xff321f12), // Brown background
+                                    shape = RoundedCornerShape(16.dp) // Rounded corners
+                                )
+                                .padding(16.dp)
+                                .fillMaxWidth()
+                                .height(160.dp)
+                        ) {
+                            // Broom details
+                            currTrip?.let {
+                                Text(
+                                    text = it.broomName,
+                                    color = Color.White,
+                                    fontSize = 28.sp,
+                                    modifier = Modifier
+                                        .padding(bottom = 8.dp)
+                                        .align(Alignment.TopCenter)
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .padding(top = 32.dp)
+                                    .fillMaxWidth(),
+
+                                ) {
+                                Box(
+                                    modifier = Modifier.size(100.dp)
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = if (curse) R.drawable.background_for_broom_curse else R.drawable.background_for_broom),
+                                        contentDescription = "Broom Background",
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+
+                                    Image(
+                                        painter = painterResource(id = R.drawable.nimbus_2000), // Overlay image
+                                        contentDescription = "Broom Overlay",
+                                        modifier = Modifier
+                                            .size(90.dp) // Overlay image size
+                                            .align(Alignment.Center) // Center over the background
+                                    )
+                                }
+
+                                // Details section (time and distance)
+                                Column {
+                                    // Time Row
+                                    Row(
+                                        horizontalArrangement = Arrangement.Start
+                                    ) {
+                                        Image(
+                                            painter = painterResource(id = R.drawable.time_trip),
+                                            contentDescription = "Time Trip Logo",
+                                            modifier = Modifier
+                                                .size(40.dp) // Adjust icon size
+                                                .padding(start = 16.dp, end = 4.dp)
+                                                .align(Alignment.CenterVertically)
+                                        )
+                                        Text(
+                                            text = formattedTime,
+                                            color = Color.White,
+                                            fontSize = 18.sp, // Adjust text size as needed
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
+                                    }
+
+                                    // Distance Row
+                                    Row(
+                                        horizontalArrangement = Arrangement.Start,
+                                        modifier = Modifier.offset(y = (-12).dp)
+                                    ) {
+                                        Image(
+                                            painter = painterResource(id = R.drawable.m_logo),
+                                            contentDescription = "Distance Logo",
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .padding(start = 16.dp, end = 4.dp)
+                                                .align(Alignment.CenterVertically)
+                                        )
+                                        Text(
+                                            text = String.format("%.1f", totalDistance),
+                                            color = Color.White,
+                                            fontSize = 18.sp,
+                                            modifier = Modifier.align(Alignment.CenterVertically)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Finish Trip button
+                        Button(
+                            onClick = {
+
+                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+                                try {
+                                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                        if (location != null) {
+                                            userLocation = LatLng(location.latitude, location.longitude)
+
+                                            // Move this inside to ensure userLocation is updated before calling endTrip
+                                            viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
+                                                if (ret) {
+                                                    hasTrip = false
+
+                                                    // Clear the start time and reset the timer
+                                                    editor.remove("startTime").apply()
+                                                    startTime = -1L
+                                                    timer = 0L
+
+                                                    totalDistance = 0.0
+                                                    previousLocation = null
+                                                    editor.putFloat("totalDistance", 0f).apply()
+
+                                                    navController.navigate(Screens.Camera.route)
+                                                }
+                                            }
+                                        } else {
+                                            Log.e("LocationError", "Failed to get location")
+                                        }
+                                    }
+                                } catch (e: SecurityException) {
+                                    Log.e("LocationScreen", "Permission denied or revoked: ${e.message}")
+                                }
+
+                                if (currRace != null) {
+                                    if (!currRace!!.finished) {
+                                        raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, currRace!!.friendRace) { ret ->
+                                            if (ret) {
+                                                if (currRace!!.winner == authUser?.email.toString()) {
+                                                    userViewModel.updateUserRecords(authUser?.email.toString())
+                                                    showDialogEndRaceWin = true
+                                                }
+                                                else {
+                                                    showDialogEndRaceLose = true
+                                                }
+
+                                                raceOver = true
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 16.dp)
+                                .offset(y = (-16).dp)
+                                .background(
+                                    color = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1),
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                        16.dp
+                                    )
+                                ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (curse) Color(0xffe0eedd) else Color(0xFFDBC7A1) // Match image color
+                            )
+                        ) {
+                            Text(
+                                text = "Finish Trip",
+                                color = Color(0xFF321F12),
+                                fontSize = 18.sp,
+                            )
                         }
                     }
 
