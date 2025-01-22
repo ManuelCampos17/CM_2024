@@ -211,7 +211,7 @@ fun MapScreen(navController: NavController) {
                                         showDialogEndRaceWin = true
                                     }
                                     else {
-                                        showDialogEndRaceLose= true
+                                        showDialogEndRaceLose = true
                                     }
 
                                     raceOver = true
@@ -728,56 +728,50 @@ fun MapScreen(navController: NavController) {
                                             }
 
                                             if (timeLeft == 0) {
-                                                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+                                                val userViewmodel = UserViewModel()
 
-                                                try {
-                                                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                                                        if (location != null) {
-                                                            userLocation = LatLng(location.latitude, location.longitude)
+                                                userViewmodel.removeCurse(authUser?.email.toString()) {
+                                                    curse = false
 
-                                                            viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
+                                                    if (currRace != null) {
+                                                        if (!currRace!!.finished) {
+                                                            val winner = if (authUser?.email.toString() == currRace!!.friendRace) {
+                                                                currRace!!.userRace
+                                                            } else {
+                                                                currRace!!.friendRace
+                                                            }
+
+                                                            raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, winner) { ret ->
                                                                 if (ret) {
-                                                                    hasTrip = false
-
-                                                                    val userViewmodel = UserViewModel()
-                                                                    userViewmodel.removeCurse(authUser?.email.toString())
-                                                                    curse = false
-
-                                                                    editor.remove("startTime").apply()
-                                                                    startTime = -1L
-                                                                    timer = 0L
-
-                                                                    if (isPlaying) {
-                                                                        mediaPlayer?.pause()
-                                                                        isPlaying = false
+                                                                    if (currRace!!.winner == authUser?.email.toString()) {
+                                                                        userViewModel.updateUserRecords(authUser?.email.toString())
+                                                                        showDialogEndRaceWin = true
+                                                                    }
+                                                                    else {
+                                                                        showDialogEndRaceLose = true
                                                                     }
 
-                                                                    previousLocation = null
-                                                                    totalDistance = 0.0
-                                                                    editor.putFloat("totalDistance", 0f).apply()
-                                                                }
-                                                            }
-                                                        } else {
-                                                            Log.e("LocationError", "Failed to get location")
-                                                        }
-                                                    }
-                                                } catch (e: SecurityException) {
-                                                    Log.e("LocationScreen", "Permission denied or revoked: ${e.message}")
-                                                }
-
-                                                if (currRace != null) {
-                                                    if (!currRace!!.finished) {
-                                                        raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, currRace!!.friendRace) { ret ->
-                                                            if (ret) {
-                                                                if (currRace!!.winner == authUser?.email.toString()) {
-                                                                    userViewModel.updateUserRecords(authUser?.email.toString())
-                                                                    showDialogEndRaceWin = true
-                                                                }
-                                                                else {
-                                                                    showDialogEndRaceLose = true
+                                                                    raceOver = true
                                                                 }
 
-                                                                raceOver = true
+                                                                viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
+                                                                    if (ret) {
+                                                                        hasTrip = false
+
+                                                                        editor.remove("startTime").apply()
+                                                                        startTime = -1L
+                                                                        timer = 0L
+
+                                                                        if (isPlaying) {
+                                                                            mediaPlayer?.pause()
+                                                                            isPlaying = false
+                                                                        }
+
+                                                                        previousLocation = null
+                                                                        totalDistance = 0.0
+                                                                        editor.putFloat("totalDistance", 0f).apply()
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -801,7 +795,7 @@ fun MapScreen(navController: NavController) {
                         ShakeDetector { shaken ->
                             if (shaken) {
                                 val userViewmodel = UserViewModel()
-                                userViewmodel.removeCurse(authUser?.email.toString())
+                                userViewmodel.removeCurse(authUser?.email.toString()) { }
                                 curse = false
                             }
                         }
@@ -950,7 +944,13 @@ fun MapScreen(navController: NavController) {
 
                                 if (currRace != null) {
                                     if (!currRace!!.finished) {
-                                        raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, currRace!!.friendRace) { ret ->
+                                        val winner = if (authUser?.email.toString() == currRace!!.friendRace) {
+                                            currRace!!.userRace
+                                        } else {
+                                            currRace!!.friendRace
+                                        }
+
+                                        raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, winner) { ret ->
                                             if (ret) {
                                                 if (currRace!!.winner == authUser?.email.toString()) {
                                                     userViewModel.updateUserRecords(authUser?.email.toString())
@@ -1070,9 +1070,10 @@ fun MapScreen(navController: NavController) {
                     }
 
                     if (showDialogEndRaceWin) {
-                        Thread.sleep(2000)
+                        Thread.sleep(400)
 
                         currRace?.let { race ->
+                            raceViewModel.removeRaceInvite(race.userRace, race.friendRace) { }
                             raceViewModel.deleteRace(race.userRace, race.friendRace) { }
                         }
 
@@ -1107,7 +1108,7 @@ fun MapScreen(navController: NavController) {
                             modifier = Modifier.wrapContentWidth()
                         )
                     } else if (showDialogEndRaceLose) {
-                        Thread.sleep(2000)
+                        Thread.sleep(400)
 
                         currRace?.let { race ->
                             raceViewModel.removeRaceInvite(race.userRace, race.friendRace) { }

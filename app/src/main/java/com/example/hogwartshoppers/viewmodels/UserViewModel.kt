@@ -389,7 +389,7 @@ class UserViewModel: ViewModel(){
 
     // remove the curse from the user
     // Remove the curse from the user
-    fun removeCurse(email: String) {
+    fun removeCurse(email: String, callback: (Boolean) -> Unit) {
         magicRef.get().addOnSuccessListener { snapshot ->
             snapshot.children.forEach { child ->
                 val toValue = child.child("to").value as? String
@@ -397,9 +397,13 @@ class UserViewModel: ViewModel(){
                     // Remove the matching child
                     child.ref.removeValue()
                 }
+                callback(true)
             }
         }.addOnFailureListener { error ->
             Log.d("Magic", "Failed to remove curse: ${error.message}")
+            callback(false)
         }
+
+        callback(false)
     }
 }
