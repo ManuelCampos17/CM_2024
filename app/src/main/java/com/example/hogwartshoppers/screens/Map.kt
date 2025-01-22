@@ -1124,7 +1124,7 @@ fun MapScreen(navController: NavController) {
                     ){
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(20.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
@@ -1136,7 +1136,7 @@ fun MapScreen(navController: NavController) {
                                     modifier = Modifier.size(30.dp)
                                 )
 
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(5.dp))
 
                                 Text(
                                     text = "${"%.0f".format(SensorManager.getAltitude(SensorManager.PRESSURE_STANDARD_ATMOSPHERE, pressure))} m",
@@ -1162,7 +1162,7 @@ fun MapScreen(navController: NavController) {
                                     modifier = Modifier.size(30.dp)
                                 )
 
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(5.dp))
 
                                 Text(
                                     text = "${"%.0f".format(smoothedSpeed)} km/h",
@@ -1183,8 +1183,8 @@ fun MapScreen(navController: NavController) {
                         Box(modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(
-                                end = 85.dp,
-                                bottom = if (hasTrip == true) 220.dp else 20.dp // Adjust position when hasTrip is true
+                                end = 20.dp,
+                                bottom = if (hasTrip == true) 275.dp else 75.dp // Adjust position when hasTrip is true
                             )
                             .background(
                                 color = if (curse) Color(0xff324e3b) else Color(0xff321f12),

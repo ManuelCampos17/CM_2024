@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
@@ -190,7 +192,8 @@ fun CustomizeBroomScreen(navController: NavController, selectedBroomName: String
                     .fillMaxSize()
                     .background(Color(0xff321f12))
                     .padding(innerPadding)
-                    .border(3.dp, Color(0xFFBB9753)),
+                    .border(3.dp, Color(0xFFBB9753))
+                    .verticalScroll(rememberScrollState()),
                 color = Color(0xff321f12)
             ) {
                 Column(

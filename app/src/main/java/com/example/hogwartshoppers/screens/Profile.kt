@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
@@ -121,7 +123,7 @@ fun ProfileScreen(navController: NavController, userMail: String) {
                             fontSize = 24.sp,
                             color = Color.White
                         )
-                        Menu(navController = navController, currUserEmail = currUser?.email)
+                        Menu(navController = navController, currUserEmail = authUser?.email)
                     }
                 }
             }
@@ -167,6 +169,7 @@ fun ProfileScreen(navController: NavController, userMail: String) {
                     .background(Color(0xff321f12))
                     .border(3.dp, Color(0xFFBB9753))
                     .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.hogwartslogo),

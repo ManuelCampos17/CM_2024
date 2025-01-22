@@ -202,42 +202,13 @@ fun Login(navController: NavController) {
                     Text("Register")
                 }
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Divider(
-                    color = Color.White, // Color of the line
-                    thickness = 1.dp,   // Line thickness
-                    modifier = Modifier.weight(1f) // This makes the line take half of the screen
-                )
-
-                Text(
-                    text = "OR",
-                    modifier = Modifier.padding(horizontal = 8.dp), // Space around the "Or"
-                    color = Color.White // You can change the color of the "Or" text
-                )
-
-                Divider(
-                    color = Color.White, // Color of the line
-                    thickness = 1.dp,   // Line thickness
-                    modifier = Modifier.weight(1f) // This makes the line continue after the "Or"
-                )
-            }
-            Image(
-                painter = painterResource(id = R.drawable.google),
-                contentDescription = "Google button",
-                modifier = Modifier
-                    .size(200.dp) // Adjust size as needed
-                    .offset { IntOffset(0, -120) }
-            )
         }
         Image(
             painter = painterResource(id = R.drawable.castlebrownbg),
             contentDescription = "Hogwarts Castle",
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .size(300.dp) // Adjust size as needed
+                .size(200.dp) // Adjust size as needed
         )
     }
 }
