@@ -728,6 +728,24 @@ fun MapScreen(navController: NavController) {
                                         Log.e("LocationError", "Failed to get location")
                                     }
                                 }
+
+                                if (currRace != null) {
+                                    if (!currRace!!.finished) {
+                                        raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, currRace!!.friendRace) { ret ->
+                                            if (ret) {
+                                                if (currRace!!.winner == authUser?.email.toString()) {
+                                                    userViewModel.updateUserRecords(authUser?.email.toString())
+                                                    showDialogEndRaceWin = true
+                                                }
+                                                else {
+                                                    showDialogEndRaceLose = true
+                                                }
+
+                                                raceOver = true
+                                            }
+                                        }
+                                    }
+                                }
                             },
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
