@@ -241,7 +241,7 @@ fun SettingsScreen(navController: NavController) {
                         )
 
                         Button(
-                            onClick = {},
+                            onClick = { navController.navigate(Screens.About.route) },
                             modifier = Modifier
                                 .size(275.dp, 50.dp)
                                 .fillMaxWidth()
@@ -250,7 +250,7 @@ fun SettingsScreen(navController: NavController) {
                                 containerColor = Color(0xff4b2f1b)
                             )
                         ) {
-                            Text("Payment Options")
+                            Text("About")
                         }
 
                         Button(

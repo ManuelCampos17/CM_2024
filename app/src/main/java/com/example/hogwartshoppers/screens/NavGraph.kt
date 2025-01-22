@@ -77,9 +77,8 @@ fun NavGraph(navController: NavHostController) {
             ForumPostScreen(navController = navController, postEmail = postEmail, postTitle = postTitle)
         }
 
-        composable(route = Screens.Testing.route){
-            Testing(navController = navController)
+        composable(route = Screens.About.route){
+            About(navController = navController)
         }
-
     }
 }

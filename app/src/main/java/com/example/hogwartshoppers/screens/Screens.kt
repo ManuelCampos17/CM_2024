@@ -15,5 +15,5 @@ sealed class Screens (val route: String) {
     object RaceConditions : Screens("race_conditions_screen/{friendEmail}")
     object Race : Screens("race_screen/{friendEmail}")
     object Camera: Screens("camera")
-    object Testing: Screens("testing")
+    object About: Screens("about")
 }
