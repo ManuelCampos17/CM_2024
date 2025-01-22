@@ -549,11 +549,16 @@ fun FriendBox(userEmail: String,email: String, isFlying: Boolean, navController:
     val userViewModel: UserViewModel = viewModel()
     val raceViewModel: RaceViewModel = viewModel()
     var friend by remember { mutableStateOf<User?>(null) }
+    var userFlying by remember { mutableStateOf(false) }
 
     // Fetch the user's info for each friend
     LaunchedEffect(email) {
         userViewModel.getUserInfo(email) { user ->
             friend = user
+        }
+
+        userViewModel.getUserInfo(userEmail) { user ->
+            userFlying = user?.flying == true
         }
     }
 
@@ -701,7 +706,7 @@ fun FriendBox(userEmail: String,email: String, isFlying: Boolean, navController:
                     // Button for "Challenge for Race"
                     Button(
                         onClick = {
-                                if (isFlying) {
+                                if (isFlying && userFlying) {
                                     var races: List<Race>? = null
                                     raceViewModel.getRaces { races = it
                                         Log.d("Races", races.toString())
@@ -787,7 +792,7 @@ fun FriendBox(userEmail: String,email: String, isFlying: Boolean, navController:
 
                 if(!isFriendRiding) {
                     Text(
-                        text = "You can't race a friend that isn't riding a broom!",
+                        text = "You and your friend need to be riding brooms to race!",
                         color = Color.Red,
                         fontSize = 12.sp
                     )
