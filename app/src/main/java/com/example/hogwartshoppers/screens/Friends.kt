@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -80,7 +79,6 @@ fun FriendsScreen(navController: NavController, acceptedRequest: Boolean) {
     val authUser = auth.currentUser
 
     val userViewModel: UserViewModel = viewModel()
-    val raceViewModel: UserViewModel = viewModel()
     var currUser by remember { mutableStateOf<User?>(null) }
 
     var allUsers by remember { mutableStateOf<List<User>?>(null) }

@@ -113,6 +113,22 @@ class ForumViewModel: ViewModel() {
         }
     }
 
+    // funcao para dar delete das replies de um title
+    fun deleteReplies(title: String) {
+        repliesRef.get().addOnSuccessListener { snapshot ->
+            for (allReplies in snapshot.children) {
+                val reply = Replies(
+                    userEmail = allReplies.child("userEmail").value as? String ?: "",
+                    title = allReplies.child("title").value as? String ?: "",
+                    text = allReplies.child("text").value as? String ?: ""
+                )
+                if (reply.title == title) {
+                    allReplies.ref.removeValue()
+                }
+            }
+        }
+    }
+
     // funcao para dar retrieve de TODAS as replies
     fun getAllReplies(callback: (List<Replies>?) -> Unit) {
         repliesRef.get().addOnSuccessListener { snapshot ->

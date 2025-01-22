@@ -526,6 +526,7 @@ fun PostBox(userMail: String, userEmail: String,title: String, text: String, nav
                     Button(
                         onClick = {
                            forumViewModel.deletePost(userMail, title)
+                            forumViewModel.deleteReplies(title)
                             Thread.sleep(800)
                             navController.navigate(Screens.Forum.route
                             )
