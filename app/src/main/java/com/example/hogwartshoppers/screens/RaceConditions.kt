@@ -75,6 +75,7 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
     var race by remember { mutableStateOf<Race?>(null) }
     var finishLine by remember { mutableStateOf("") }
     var alreadyInvited by remember { mutableStateOf(false) }
+    var noCoordsSelected by remember { mutableStateOf(false) }
 
     LaunchedEffect(authUser?.email.toString()) {
         userViewModel.getUserInfo(authUser?.email.toString()) { user ->
@@ -364,19 +365,39 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
 
                         Button(
                             onClick = {
+
+
                                 raceViewModel.getInvites() { invites ->
+                                    var count = 0
                                     for (invite in invites) {
                                         if (invite.to == friendEmail) {
-                                            alreadyInvited = true
+                                            count++
                                         }
                                     }
-                                    if (!alreadyInvited) {
-                                        raceViewModel.inviteUser(authUser?.email.toString(), friendEmail) { success ->
-                                            if (success) {
-                                                navController.navigate("race_screen/${friendEmail}")
+
+                                    raceViewModel.getRaceCoords(authUser?.email.toString(), friendEmail
+                                    ) { coords ->
+                                        // get the coords from the Pair and check if they are 0
+                                        noCoordsSelected =
+                                            if (coords != null) {
+                                                coords.first == 0.0 && coords.second == 0.0
+                                            } else {
+                                                true
                                             }
-                                            else {
-                                                Log.d("Error", "Error inviting user")
+
+                                        alreadyInvited = count > 0
+
+                                        if (!noCoordsSelected && !alreadyInvited) {
+
+                                            raceViewModel.inviteUser(
+                                                authUser?.email.toString(),
+                                                friendEmail
+                                            ) { success ->
+                                                if (success) {
+                                                    navController.navigate("race_screen/${friendEmail}")
+                                                } else {
+                                                    Log.d("Error", "Error inviting user")
+                                                }
                                             }
                                         }
                                     }
@@ -395,7 +416,15 @@ fun RaceConditions(navController: NavController, friendEmail: String) {
                                 overflow = TextOverflow.Ellipsis)
                         }
 
-                        if(alreadyInvited) {
+                        if(noCoordsSelected) {
+                            Text(
+                                text = "You need to select a finish line!",
+                                color = Color.Red,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                                    .align(Alignment.CenterHorizontally),
+                                fontSize = 12.sp
+                            )
+                        } else if(alreadyInvited) {
                             Text(
                                 text = "Looks like this user was already invited to another race\n " +
                                         "Wait for them to reject the invite or finish the race",

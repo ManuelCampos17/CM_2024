@@ -114,6 +114,21 @@ class RaceViewModel: ViewModel() {
         }
     }
 
+    fun getRaceCoords(user: String, friend: String, callback: (Pair<Double, Double>?) -> Unit) {
+        racesRef.get().addOnSuccessListener { snapshot ->
+            val race = snapshot.children.find {
+                it.child("userRace").value == user && it.child("friendRace").value == friend
+            }
+            if (race != null) {
+                val latitude = convertToDouble(race.child("latitude").value)
+                val longitude = convertToDouble(race.child("longitude").value)
+                callback(Pair(latitude, longitude))
+            }
+            else {
+                callback(null)
+            }
+        }
+    }
 
     //function to create a new race
     fun createRace(user: String, friend: String, callback: (Boolean) -> Unit) {
@@ -136,18 +151,6 @@ class RaceViewModel: ViewModel() {
     }
 
     fun deleteRace(user: String, friend: String, callback: (Boolean) -> Unit) {
-//        racesRef.get().addOnSuccessListener { snapshot ->
-//            val race = snapshot.children.find {
-//                it.child("userRace").value == user && it.child("friendRace").value == friend
-//            }
-//            if (race != null) {
-//                race.ref.removeValue().addOnCompleteListener {
-//                    callback(it.isSuccessful)
-//                }
-//            } else {
-//                callback(false)
-//            }
-//        }
 
         racesRef.get().addOnSuccessListener { snapshot ->
             if (snapshot.exists() && snapshot.hasChildren()) {
