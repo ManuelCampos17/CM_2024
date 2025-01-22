@@ -7,6 +7,8 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -33,9 +35,7 @@ import java.util.concurrent.Executors
 
 @Composable
 fun CameraScreen(navController: NavController) {
-
     val broomViewModel: BroomViewModel = viewModel()
-    
     val auth = FirebaseAuth.getInstance()
     val authUser = auth.currentUser
 
@@ -45,17 +45,21 @@ fun CameraScreen(navController: NavController) {
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
     var permissionsGranted by remember { mutableStateOf(false) }
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        permissionsGranted = isGranted
+    }
+
     LaunchedEffect(Unit) {
-        if (!allPermissionsGranted(context)) {
-            requestCameraPermissions(context)
-        } else {
-            permissionsGranted = true
+        if (!permissionsGranted) {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
-    if (permissionsGranted && cameraExecutor == null) {
-        cameraExecutor = Executors.newSingleThreadExecutor()
-        LaunchedEffect(Unit) {
+    LaunchedEffect(permissionsGranted) {
+        if (permissionsGranted && cameraExecutor == null) {
+            cameraExecutor = Executors.newSingleThreadExecutor()
             previewView = PreviewView(context).apply {
                 startCamera(this, context) { capture ->
                     imageCapture = capture
@@ -159,19 +163,5 @@ private fun uploadToFirebase(photoFile: File,userMail: String, broomViewModel: B
         Log.e("Firebase", "Image upload failed: ${exception.message}")
     }
 }
-
-private fun allPermissionsGranted(context: Context) =
-    REQUIRED_PERMISSIONS.all {
-        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-    }
-
-private fun requestCameraPermissions(context: Context) {
-    ActivityCompat.requestPermissions(
-        context as ComponentActivity, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-    )
-}
-
-private const val REQUEST_CODE_PERMISSIONS = 10
-private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
 
 

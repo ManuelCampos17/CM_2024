@@ -15,6 +15,8 @@ import android.os.Looper
 import android.util.Log
 import android.widget.ImageButton
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.infiniteRepeatable
@@ -267,82 +269,91 @@ fun MapScreen(navController: NavController) {
     var previousLocation: LatLng? by remember { mutableStateOf(null) }
     val editor = sharedPreferences.edit()
 
-    // Check and request location permissions
+    var permissionsGranted by remember { mutableStateOf(false) }
+
+    // Permission launcher
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        permissionsGranted = isGranted
+    }
+
     LaunchedEffect(Unit) {
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                (context as androidx.activity.ComponentActivity),
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1
-            )
-        } else {
+        if (!permissionsGranted) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+    // Check and request location permissions
+    LaunchedEffect(permissionsGranted) {
+        if (permissionsGranted) {
             // Fetch user's location
             val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    userLocation = LatLng(location.latitude, location.longitude)
+            try {
+                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                    if (location != null) {
+                        userLocation = LatLng(location.latitude, location.longitude)
+                    }
                 }
-            }
 
-            val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
-                com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, 500L
-            ).setMinUpdateIntervalMillis(300L).build()
+                val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
+                    com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, 500L
+                ).setMinUpdateIntervalMillis(300L).build()
 
-            val locationCallback = object : com.google.android.gms.location.LocationCallback() {
-                override fun onLocationResult(locationResult: com.google.android.gms.location.LocationResult) {
-                    val newLocation = locationResult.lastLocation
-                    val currentTime = System.currentTimeMillis()
+                val locationCallback = object : com.google.android.gms.location.LocationCallback() {
+                    override fun onLocationResult(locationResult: com.google.android.gms.location.LocationResult) {
+                        val newLocation = locationResult.lastLocation
+                        val currentTime = System.currentTimeMillis()
 
-                    locationResult.locations.lastOrNull()?.let { location ->
-                        val currentLocation = LatLng(location.latitude, location.longitude)
-                        userLocation = currentLocation
+                        locationResult.locations.lastOrNull()?.let { location ->
+                            val currentLocation = LatLng(location.latitude, location.longitude)
+                            userLocation = currentLocation
 
-                        if (previousLocation != null) {
-                            totalDistance += calculateDistance(previousLocation!!, currentLocation)
+                            if (previousLocation != null) {
+                                totalDistance += calculateDistance(previousLocation!!, currentLocation)
 
-                            editor.putFloat("totalDistance", totalDistance.toFloat()).apply()
+                                editor.putFloat("totalDistance", totalDistance.toFloat()).apply()
+                            }
+
+                            previousLocation = currentLocation
                         }
 
-                        previousLocation = currentLocation
-                    }
+                        if (lastLocation != null && newLocation != null) {
+                            val distance = lastLocation!!.distanceTo(newLocation) // Distance in meters
+                            val timeElapsed = (currentTime - lastTime) / 1000f // Time in seconds
+                            speed = if (timeElapsed > 0) (distance / timeElapsed) * 3.6f else 0f // Convert to km/h
+                        }
 
-                    if (lastLocation != null && newLocation != null) {
-                        val distance = lastLocation!!.distanceTo(newLocation) // Distance in meters
-                        val timeElapsed = (currentTime - lastTime) / 1000f // Time in seconds
-                        speed = if (timeElapsed > 0) (distance / timeElapsed) * 3.6f else 0f // Convert to km/h
-                    }
+                        lastLocation = newLocation
+                        lastTime = currentTime
 
-                    lastLocation = newLocation
-                    lastTime = currentTime
+                        if (currRace != null) {
+                            if (!currRace!!.finished) {
+                                if (lastLocation?.let { hasUserReachedTarget(it.latitude, it.longitude, currRace!!.latitude, currRace!!.longitude, 5f) } == true) {
+                                    raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, authUser?.email.toString()) { ret ->
+                                        if (ret) {
+                                            if (currRace!!.winner == authUser?.email.toString()) {
+                                                userViewModel.updateUserRecords(authUser?.email.toString())
+                                                showDialogEndRaceWin = true
+                                            }
+                                            else {
+                                                showDialogEndRaceLose = true
+                                            }
 
-                    if (currRace != null) {
-                        if (!currRace!!.finished) {
-                            if (lastLocation?.let { hasUserReachedTarget(it.latitude, it.longitude, currRace!!.latitude, currRace!!.longitude, 5f) } == true) {
-                                raceViewModel.finishRace(currRace!!.userRace, currRace!!.friendRace, authUser?.email.toString()) { ret ->
-                                    if (ret) {
-                                        if (currRace!!.winner == authUser?.email.toString()) {
-                                            userViewModel.updateUserRecords(authUser?.email.toString())
-                                            showDialogEndRaceWin = true
+                                            raceOver = true
                                         }
-                                        else {
-                                            showDialogEndRaceLose = true
-                                        }
-
-                                        raceOver = true
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+                fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+            } catch (e: SecurityException) {
+                Log.e("LocationScreen", "Permission denied or revoked: ${e.message}")
+            }
         }
     }
 
@@ -568,7 +579,12 @@ fun MapScreen(navController: NavController) {
                                 fastestInterval = 500
                                 priority = LocationRequest.PRIORITY_HIGH_ACCURACY
                             }
-                            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+
+                            try {
+                                fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+                            } catch (e: SecurityException) {
+                                Log.e("LocationScreen", "Permission denied or revoked: ${e.message}")
+                            }
                         }
                     }
 
@@ -703,30 +719,34 @@ fun MapScreen(navController: NavController) {
 
                                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                                    if (location != null) {
-                                        userLocation = LatLng(location.latitude, location.longitude)
+                                try {
+                                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                        if (location != null) {
+                                            userLocation = LatLng(location.latitude, location.longitude)
 
-                                        // Move this inside to ensure userLocation is updated before calling endTrip
-                                        viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
-                                            if (ret) {
-                                                hasTrip = false
+                                            // Move this inside to ensure userLocation is updated before calling endTrip
+                                            viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
+                                                if (ret) {
+                                                    hasTrip = false
 
-                                                // Clear the start time and reset the timer
-                                                editor.remove("startTime").apply()
-                                                startTime = -1L
-                                                timer = 0L
+                                                    // Clear the start time and reset the timer
+                                                    editor.remove("startTime").apply()
+                                                    startTime = -1L
+                                                    timer = 0L
 
-                                                totalDistance = 0.0
-                                                previousLocation = null
-                                                editor.putFloat("totalDistance", 0f).apply()
+                                                    totalDistance = 0.0
+                                                    previousLocation = null
+                                                    editor.putFloat("totalDistance", 0f).apply()
 
-                                                navController.navigate(Screens.Camera.route)
+                                                    navController.navigate(Screens.Camera.route)
+                                                }
                                             }
+                                        } else {
+                                            Log.e("LocationError", "Failed to get location")
                                         }
-                                    } else {
-                                        Log.e("LocationError", "Failed to get location")
                                     }
+                                } catch (e: SecurityException) {
+                                    Log.e("LocationScreen", "Permission denied or revoked: ${e.message}")
                                 }
 
                                 if (currRace != null) {
@@ -891,35 +911,39 @@ fun MapScreen(navController: NavController) {
                                             if (timeLeft == 0) {
                                                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-                                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                                                    if (location != null) {
-                                                        userLocation = LatLng(location.latitude, location.longitude)
+                                                try {
+                                                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                                        if (location != null) {
+                                                            userLocation = LatLng(location.latitude, location.longitude)
 
-                                                        viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
-                                                            if (ret) {
-                                                                hasTrip = false
+                                                            viewmodel.endTrip(authUser?.email.toString(), totalDistance, userLocation!!, context) { ret ->
+                                                                if (ret) {
+                                                                    hasTrip = false
 
-                                                                val userViewmodel = UserViewModel()
-                                                                userViewmodel.removeCurse(authUser?.email.toString())
-                                                                curse = false
+                                                                    val userViewmodel = UserViewModel()
+                                                                    userViewmodel.removeCurse(authUser?.email.toString())
+                                                                    curse = false
 
-                                                                editor.remove("startTime").apply()
-                                                                startTime = -1L
-                                                                timer = 0L
+                                                                    editor.remove("startTime").apply()
+                                                                    startTime = -1L
+                                                                    timer = 0L
 
-                                                                if (isPlaying) {
-                                                                    mediaPlayer?.pause()
-                                                                    isPlaying = false
+                                                                    if (isPlaying) {
+                                                                        mediaPlayer?.pause()
+                                                                        isPlaying = false
+                                                                    }
+
+                                                                    previousLocation = null
+                                                                    totalDistance = 0.0
+                                                                    editor.putFloat("totalDistance", 0f).apply()
                                                                 }
-
-                                                                previousLocation = null
-                                                                totalDistance = 0.0
-                                                                editor.putFloat("totalDistance", 0f).apply()
                                                             }
+                                                        } else {
+                                                            Log.e("LocationError", "Failed to get location")
                                                         }
-                                                    } else {
-                                                        Log.e("LocationError", "Failed to get location")
                                                     }
+                                                } catch (e: SecurityException) {
+                                                    Log.e("LocationScreen", "Permission denied or revoked: ${e.message}")
                                                 }
 
                                                 if (currRace != null) {
